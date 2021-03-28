@@ -21,12 +21,15 @@ namespace FPSControllerLPFP
         public float postAirDashSpeed = 27f;
         public float runSpeed = 27f;
         public float airSpeed = 1f;
+        public float slideSpeed = 35f;
         public float normalGravity = -20f;
         public float gravity = -20f;//-14.72f;//-9.81f;
         public float groundPoundMultiplier = 5f;
         public float jumpHeight = 3f;
         public float jumpVelocity = 20f;
         public float shortJumpHeight = 1.25f;
+        public float slideLerpDuration = 0.5f;
+        private float timeElapsed = 0f;
 
         //scale to gravity
         public float fastFallScale = 2;
@@ -49,6 +52,7 @@ namespace FPSControllerLPFP
         bool isCollidingWithWall = false;
         bool isHoldingJump = false;
         bool isRotating = false;
+        bool isSliding = false;
 
         //the wall the character jumped off of
         private int wallJumpedOffOf;
@@ -61,6 +65,7 @@ namespace FPSControllerLPFP
         private int airDashesAllowed = 1;
         private float gpJumpStartTime;
         private float degreesRotated = 0;
+        private Vector3 groundNormal = Vector3.zero;
 
 
 #pragma warning disable 649
@@ -96,6 +101,9 @@ namespace FPSControllerLPFP
 
         [Tooltip("The audio clip that is played when holding jump"), SerializeField]
         private AudioClip jumpHoldSound;
+
+        [Tooltip("The audio clip that is played when sliding"), SerializeField]
+        private AudioClip slideSound;
 
         [Header("Movement Settings")]
         [Tooltip("How fast the player moves while walking and strafing."), SerializeField]
@@ -232,7 +240,10 @@ namespace FPSControllerLPFP
         /// Moves the camera to the character, processes jumping and plays sounds every frame.
         private void Update()
         {
-            Debug.Log(isRotating);
+            //Lerp slide camera
+            LerpSlideCamera();
+
+            //Debug.Log(isSliding);
 
             //rotation testing
             //mainCamera.Rotate(540f * Time.deltaTime, 0f, 0f, Space.Self);
@@ -311,7 +322,7 @@ namespace FPSControllerLPFP
                 Vector3 footPosition = new Vector3(transform.position.x, transform.position.y - ((controller.height / 2) - controller.skinWidth), transform.position.z);
                 //check when grounded and slightly leaving the ground (running down a slope for example)
                 RaycastHit hit;
-                Vector3 groundNormal;
+                //Vector3 groundNormal;
                 if (Physics.Raycast(footPosition, -transform.up, out hit, 0.2f))// 5f))
                 {
                     counter++;
@@ -320,7 +331,39 @@ namespace FPSControllerLPFP
                     //Debug.Log("CAST HIT");
                     groundNormal = hit.normal;
                     //Debug.Log(transform.position.y - ((controller.height / 2) + controller.skinWidth) - 0.5f);
-                    move = Vector3.ProjectOnPlane(move, groundNormal);
+
+                    //move = Vector3.ProjectOnPlane(move, groundNormal);
+
+                    //slide logic
+                    if (Input.GetKey(KeyCode.Q) && (Math.Abs(groundNormal.z) < 0.10f || Math.Abs(groundNormal.x) < 0.10f))
+                    {
+                        Vector3 left = Vector3.Cross(hit.normal, Vector3.up);
+                        move = Vector3.Cross(hit.normal, left).normalized;
+                        //Debug.Log(move);
+                        if (!isSliding)
+                        {
+                            timeElapsed = 0f;
+                            Debug.Log("TEST " + counter);
+                            counter++;
+                            PlaySlideSound();
+                            //setSlideCamera(true);
+                        }
+                        isSliding = true;
+                    }
+                    else// if (groundNormal.z < 0.01f)
+                    {
+                        move = Vector3.ProjectOnPlane(move, groundNormal);
+                        if (isSliding)
+                        {
+                            timeElapsed = 0f;                            
+                            //setSlideCamera(false);
+                        }
+                        //if (_audioSource.isPlaying)
+                        //{
+                        //    _audioSource.Stop();
+                        //}
+                        isSliding = false;
+                    }
                 }
                 else
                 {
@@ -336,6 +379,8 @@ namespace FPSControllerLPFP
             if (isGrounded)
             {
 
+                
+
                 sprintReleased = false;
                 //if (x == 0)
                 //{
@@ -348,26 +393,51 @@ namespace FPSControllerLPFP
                 float run = Input.GetAxis("Fire3");
 
                 //Vector3 move = transform.right * x + transform.forward * z;
-
-                if (run > 0)
+                if (isSliding)
                 {
-
-                    //velocity.x += Mathf.Min(move.x * accel, maxRunSpeed - velocity.x);
-                    //velocity.z += Mathf.Min(move.z * accel, maxRunSpeed - velocity.z);
-                    //controller.Move(velocity * Time.deltaTime * Time.deltaTime);
-                    //velocity += (move * Mathf.Min(maxSpeed, new Vector3(move * accel * Time.deltaTime).x, 0f, ));
-                    //velocity += Mathf.Min(maxSpeed, controller.velocity)
-                    //velocity = Mathf.Min(move * maxSpeed, move * accel * Time.deltaTime);
-                    controller.Move(move * runSpeed * Time.deltaTime);
+                    controller.Move(move * slideSpeed * Time.deltaTime);
                 }
                 else
                 {
-                    //velocity.x += Mathf.Min(move.x * accel, maxWalkSpeed - velocity.x);
-                    //velocity.z += Mathf.Min(move.z * accel, maxWalkSpeed - velocity.z);
-                    //controller.Move(velocity * Time.deltaTime);
-                    //velocity = (move * Mathf.Min(maxSpeed, controller.velocity.magnitude + (accel * Time.deltaTime)));
-                    controller.Move(move * speed * Time.deltaTime);
+                    if (run > 0)
+                    {
+
+                        //velocity.x += Mathf.Min(move.x * accel, maxRunSpeed - velocity.x);
+                        //velocity.z += Mathf.Min(move.z * accel, maxRunSpeed - velocity.z);
+                        //controller.Move(velocity * Time.deltaTime * Time.deltaTime);
+                        //velocity += (move * Mathf.Min(maxSpeed, new Vector3(move * accel * Time.deltaTime).x, 0f, ));
+                        //velocity += Mathf.Min(maxSpeed, controller.velocity)
+                        //velocity = Mathf.Min(move * maxSpeed, move * accel * Time.deltaTime);
+                        controller.Move(move * runSpeed * Time.deltaTime);
+                    }
+                    else
+                    {
+                        //velocity.x += Mathf.Min(move.x * accel, maxWalkSpeed - velocity.x);
+                        //velocity.z += Mathf.Min(move.z * accel, maxWalkSpeed - velocity.z);
+                        //controller.Move(velocity * Time.deltaTime);
+                        //velocity = (move * Mathf.Min(maxSpeed, controller.velocity.magnitude + (accel * Time.deltaTime)));
+                        controller.Move(move * speed * Time.deltaTime);
+                    }
                 }
+                //if (run > 0)
+                //{
+
+                //    //velocity.x += Mathf.Min(move.x * accel, maxRunSpeed - velocity.x);
+                //    //velocity.z += Mathf.Min(move.z * accel, maxRunSpeed - velocity.z);
+                //    //controller.Move(velocity * Time.deltaTime * Time.deltaTime);
+                //    //velocity += (move * Mathf.Min(maxSpeed, new Vector3(move * accel * Time.deltaTime).x, 0f, ));
+                //    //velocity += Mathf.Min(maxSpeed, controller.velocity)
+                //    //velocity = Mathf.Min(move * maxSpeed, move * accel * Time.deltaTime);
+                //    controller.Move(move * runSpeed * Time.deltaTime);
+                //}
+                //else
+                //{
+                //    //velocity.x += Mathf.Min(move.x * accel, maxWalkSpeed - velocity.x);
+                //    //velocity.z += Mathf.Min(move.z * accel, maxWalkSpeed - velocity.z);
+                //    //controller.Move(velocity * Time.deltaTime);
+                //    //velocity = (move * Mathf.Min(maxSpeed, controller.velocity.magnitude + (accel * Time.deltaTime)));
+                //    controller.Move(move * speed * Time.deltaTime);
+                //}
 
                 if (wasGrounded == false)
                 {
@@ -388,8 +458,15 @@ namespace FPSControllerLPFP
                     if (Time.time - gpJumpStartTime <= gpSuperJumpInterval)
                     {
                         Debug.Log("SUPER JUMP");
+                        jumpAudioController.Play(true);
                         velocity.y = Mathf.Sqrt(jumpHeight * superJumpMultiplier * -2f * gravity);
                         launchVelocity = velocity;
+
+                        //rotate testing
+                        if (Input.GetKey(KeyCode.Mouse2))
+                        {
+                            isRotating = true;
+                        }
                     }
                 }
                 else
@@ -408,6 +485,13 @@ namespace FPSControllerLPFP
 
                 if (wasGrounded)
                 {
+                    if (isSliding)
+                    {
+                        isSliding = false;
+                        timeElapsed = 0f;
+                        //setSlideCamera(false);
+                    }
+
                     if (_audioSource.clip == walkingSound || _audioSource.clip == runningSound)
                     {
                         _audioSource.Pause();
@@ -441,7 +525,7 @@ namespace FPSControllerLPFP
                     //Ground Pound Logic
                     //if (Input.GetButton("Ground Pound"))
                     //if (Input.GetButton("Jump"))
-                    if (Input.GetKey(KeyCode.Q))
+                    if (Input.GetKeyDown(KeyCode.Q))
                     {
                         StartCoroutine(GroundPoundCoroutine());
                         //Debug.Log("GROUND POUND");
@@ -558,7 +642,7 @@ namespace FPSControllerLPFP
                 if (!isHoldingJump)
                 {
                     isHoldingJump = true;
-                    jumpAudioController.Play();
+                    jumpAudioController.Play(false);
                 }
             }
             //else
@@ -577,7 +661,10 @@ namespace FPSControllerLPFP
                 //velocity = new Vector3(launchVelocity.x, velocity.y, launchVelocity.z);
 
                 //rotate testing
-                isRotating = true;
+                if (Input.GetKey(KeyCode.Mouse2))
+                {
+                    isRotating = true;
+                }
             }
             
             else if (Input.GetKeyDown(KeyCode.CapsLock) && isGrounded)
@@ -890,6 +977,17 @@ namespace FPSControllerLPFP
             //}
         }
 
+        private void PlaySlideSound()
+        {
+            //Debug.Log("GP START SOUND");
+            _audioSource.clip = slideSound;
+            _audioSource.loop = false;
+            //if (!_audioSource.isPlaying)
+            //{
+            _audioSource.Play();
+            //}
+        }
+
         /// A helper for assistance with smoothing the camera rotation.
         private class SmoothRotation
         {
@@ -1067,7 +1165,20 @@ namespace FPSControllerLPFP
             return this.isGrounded;
         }
 
+        public void LerpSlideCamera()
+        {
+            if (isSliding && timeElapsed < slideLerpDuration)
+            {
+                mainCamera.transform.localPosition = new Vector3(0f, Mathf.Lerp(0f, -controller.height / 2.5f, timeElapsed/slideLerpDuration), 0f);
+                timeElapsed += Time.deltaTime;
+            }
+            else if (!isSliding && timeElapsed < slideLerpDuration)
+            {
+                mainCamera.transform.localPosition = new Vector3(0f, Mathf.Lerp(-controller.height / 2.5f, 0f, timeElapsed/slideLerpDuration), 0f);
+                timeElapsed += Time.deltaTime;
+            }
+        }
     }
-        
 
+    //mainCamera.transform.localPosition = new Vector3(mainCamera.transform.localPosition.x, (mainCamera.transform.localPosition.y - controller.height / 4f), mainCamera.transform.localPosition.z);
 }

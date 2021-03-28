@@ -9,6 +9,12 @@ public class AudioController : MonoBehaviour
     public float defaultVolume = 0.25f;
     public float defaultPitch = 0.50f;
 
+    [SerializeField]
+    private AudioClip jumpHoldClip;
+    [SerializeField]
+    private AudioClip superJumpClip;
+    
+
 
     // Start is called before the first frame update
     void Start()
@@ -27,9 +33,17 @@ public class AudioController : MonoBehaviour
         audioSource.pitch = Time.timeScale;
     }
 
-    public void Play()
+    public void Play(bool superJump)
     {
         //Debug.Log("JUMP HOLD PLAY");
+        if (superJump)
+        {
+            audioSource.clip = superJumpClip;
+        }
+        else
+        {
+            audioSource.clip = jumpHoldClip;
+        }
         audioSource.Play();
     }
 

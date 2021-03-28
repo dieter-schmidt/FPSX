@@ -587,13 +587,16 @@ public class HandgunScriptLPFP : MonoBehaviour {
                     {
                         case ("HumanEnemy"):
                         case ("Enemy"):
-                                target.GetComponent<Enemy>().TakeDamage(damage, -hit.normal);
-                                //change material on hit
-                                //enemy.GetComponent<Renderer>().material = bulletHitMaterial;
-                                target.GetComponent<Renderer>().material = bulletHitMaterial;
+                            target.GetComponent<Enemy>().TakeDamage(damage, -hit.normal);
+                            //change material on hit
+                            //enemy.GetComponent<Renderer>().material = bulletHitMaterial;
+                            target.GetComponent<Renderer>().material = bulletHitMaterial;
                             break;
                         case ("ExplosiveBarrel"):
                             target.GetComponent<ExplosiveBarrelScript>().explode = true;
+                            break;
+                        case ("Damageable"):
+                            target.GetComponent<ColumnVariableBreakScript>().TakeDamage(damage);
                             break;
                         default:
                             //add force on hit in direction of impact

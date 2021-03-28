@@ -34,10 +34,12 @@ public class MouseInput : MonoBehaviour
 
         //this is used instead of rotate due to adding clamping
         transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        //transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
         //Debug.Log(transform.localRotation.x);
         //Debug.Log(xRotation);
 
         //rotate around Y axis
         playerBody.Rotate(Vector3.up * mouseX);
+        //transform.Rotate(transform.up * mouseX);
     }
 }
