@@ -1,11 +1,10 @@
 using UnityEngine;
-using FPSTime;
+using FPSModes;
 
 public class TimeController : MonoBehaviour
 {
 
     //fixedDeltaTime - changes FixedUpdate step (too big will make slow motion less smooth)
-
     public float slowdownFactor = 0.5f;
     public float speedupFactor = 1.3f;
     public float normalFactor = 1f;
@@ -17,6 +16,9 @@ public class TimeController : MonoBehaviour
     //seconds it takes to increase timescale by 1
     public float startTransitionInterval = 1f;
     public float stopTransitionInterval = 1f;
+
+    //camera FX
+    public CameraFXController cameraFXController;
 
     //TODO - state variables for start transition and end transition to apply gradual changes
     //private bool isStarting = false;

@@ -13,6 +13,7 @@ TagManager:
   - Enemy
   - HumanEnemy
   - AnimatedEnemy
+  - Damageable
   layers:
   - Default
   - TransparentFX
@@ -20,12 +21,12 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - Gun
   - Ground
   - Enemy
   - Player
   - MaterialFX
-  - 
+  - PostProcessing
   - 
   - 
   - 
