@@ -21,6 +21,7 @@ public class MouseInput : MonoBehaviour
     public FireMode previousFireMode;
 
     float xRotation;
+    float yRotation;
 
     // Start is called before the first frame update
     void Start()
@@ -110,7 +111,7 @@ public class MouseInput : MonoBehaviour
                     //{
                     //Vector3 originScreenPos = mainCamera.WorldToScreenPoint(crossHairOrigin.transform.position);
                     Vector3 originScreenPos = crossHairOrigin.transform.position;
-                    Debug.Log(originScreenPos.x + ", " + Input.mousePosition.x);
+                    //Debug.Log(originScreenPos.x + ", " + Input.mousePosition.x);
                     //crossHairContainerSecond.transform.position = mainCamera.ScreenToWorldPoint(new Vector3(originScreenPos.x - (Input.mousePosition.x - originScreenPos.x), originScreenPos.y - (Input.mousePosition.y - originScreenPos.y), (mainCamera.nearClipPlane + 0.01f)));// mainCamera.nearClipPlane
                     crossHairContainerSecond.transform.position = originScreenPos - (Input.mousePosition - originScreenPos);
                     //}
@@ -129,12 +130,26 @@ public class MouseInput : MonoBehaviour
                 break;
 
             case FireMode.Free:
-                //if (!playerController.isGroundDash)
-                //{
-                    xRotation -= mouseY;
-                    xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+                
+                xRotation -= mouseY;
+                xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+
+                //used for ground dash only
+                yRotation -= mouseX;
+                yRotation = Mathf.Clamp(yRotation, -45f, 45f);
+
+                //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                if (!playerController.isGroundDash)
+                {
                     transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
                     playerBody.Rotate(Vector3.up * mouseX);
+                }
+                else
+                {
+                    transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                    //mainCamera.transform.localRotation = Quaternion.Euler(xRotation, -yRotation, 0f);
+                    //transform.parent.parent.Rotate(Vector3.up * yRotation);
+                }
                 //}
                 break;
         }

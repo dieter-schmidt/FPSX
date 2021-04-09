@@ -26,6 +26,8 @@ namespace FPSControllerLPFP
         public float normalGravity = -20f;
         public float gravity = -20f;//-14.72f;//-9.81f;
         public float groundPoundMultiplier = 5f;
+        public float wallSlideGravity;
+        public float wallSlideGravMultiplier = 0.2f;
         public float jumpHeight = 3f;
         public float jumpVelocity = 20f;
         public float shortJumpHeight = 1.25f;
@@ -178,6 +180,7 @@ namespace FPSControllerLPFP
         /// Initializes the FpsController on start.
         private void Start()
         {
+            wallSlideGravity = gravity;
             lastPos = transform.position;
             //Debug.Log("BEHIND OR SIDE");
             //_rigidbody = GetComponent<Rigidbody>();
@@ -261,7 +264,6 @@ namespace FPSControllerLPFP
             //LerpSlideCamera();
 
             //Debug.Log(wallCollisionStarted);
-            //Debug.Log(tripleJumpContacts);
 
             //rotation testing
             //mainCamera.Rotate(540f * Time.deltaTime, 0f, 0f, Space.Self);
@@ -486,6 +488,8 @@ namespace FPSControllerLPFP
                 {
                     //temporary solution for regaining airdash after colliding with wall but not jumping
                     wallCollisionStarted = false;
+                    //reset wall slide gravity if player hits wall but never jumped
+                    wallSlideGravity = gravity;
 
                     jumped = false;
 
@@ -770,8 +774,8 @@ namespace FPSControllerLPFP
                 velocity.y = Mathf.Sqrt(shortJumpHeight * -2f * gravity);
 
             }
-
-            if (!groundPoundStart && !isGroundPound &&!isAirDashing)
+            //added wallcollisionstarted check - 4/8
+            if (!groundPoundStart && !isGroundPound &&!isAirDashing && !wallCollisionStarted)
             {
                 //if (!isGrounded)
                 //{
@@ -783,6 +787,12 @@ namespace FPSControllerLPFP
             if (isGroundPound)
             {
                 velocity.y += gravity * groundPoundMultiplier * Time.deltaTime;
+                controller.Move(velocity * Time.deltaTime);
+            }
+            //reduce gravity while sliding down wall - 4/8
+            else if (wallCollisionStarted)
+            {
+                velocity.y += wallSlideGravity * Time.deltaTime;
                 controller.Move(velocity * Time.deltaTime);
             }
 
@@ -874,6 +884,8 @@ namespace FPSControllerLPFP
 
         IEnumerator WallJumpCoroutine()
         {
+            //4/8
+            wallSlideGravity = gravity;
             yield return new WaitForSeconds(0.2f);
             wallCollisionStarted = false;
         }
@@ -1304,6 +1316,11 @@ namespace FPSControllerLPFP
                     Debug.Log(hit.normal.y);
                     if (!wallCollisionStarted)
                     {
+                        //reduce velocity while sliding on wall - 4/8
+                        wallSlideGravity = gravity * wallSlideGravMultiplier;
+                        //test - reduce wallslide velocity
+                        launchVelocity = new Vector3(velocity.x*0.75f, velocity.y/2f, velocity.z/0.75f);
+
                         wallJumpDirection = hit.normal;
                         wallCollisionStarted = true;
                     }
@@ -1349,6 +1366,11 @@ namespace FPSControllerLPFP
         public bool getIsGrounded()
         {
             return this.isGrounded;
+        }
+
+        public bool getIsGroundDash()
+        {
+            return this.isGroundDash;
         }
 
         public void LerpSlideCamera()

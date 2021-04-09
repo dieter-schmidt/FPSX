@@ -18,6 +18,8 @@ public class TimeController : MonoBehaviour
     public float stopTransitionInterval = 1f;
 
     //camera FX
+    public float fxStartTransitionInterval = 1f;
+    public float fxStopTransitionInterval = 1f;
     public CameraFXController cameraFXController;
 
     //TODO - state variables for start transition and end transition to apply gradual changes
@@ -25,15 +27,26 @@ public class TimeController : MonoBehaviour
     //private bool isStopping = false;
     private bool isDecreasing = false;
     private bool isIncreasing = false;
+    private bool isStable = true;
+
+    private void Start()
+    {
+
+    }
 
     public void Update()
     {
+        isStable = !isDecreasing && !isIncreasing;
         //unscaled - not effected by timescale like regular deltatime is
 
         //Debug.Log(lowFactor + ", " + highFactor);
 
         if (isDecreasing)
         {
+            //Camera effects change with timescale
+            //float timeChange = (1f / startTransitionInterval) * Time.unscaledDeltaTime;
+            //cameraFXController.updateFX("timescale", (1f / startTransitionInterval) * Time.unscaledDeltaTime, 0f, 0f);
+
             Time.timeScale -= (1f / startTransitionInterval) * Time.unscaledDeltaTime;
             //float currentScale = Mathf.Clamp(Time.timeScale, slowdownFactor, 1f);
             float currentScale = Mathf.Clamp(Time.timeScale, lowFactor, highFactor);
@@ -141,5 +154,10 @@ public class TimeController : MonoBehaviour
 
         //apply transition state
         isIncreasing = true;
+    }
+
+    public bool getIsStable()
+    {
+        return isStable;
     }
 }

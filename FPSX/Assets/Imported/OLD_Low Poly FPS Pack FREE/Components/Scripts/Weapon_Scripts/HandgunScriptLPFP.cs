@@ -881,6 +881,16 @@ public class HandgunScriptLPFP : MonoBehaviour {
 			isRunning = false;
 		}
 		
+        if (movementController.getIsGroundDash() == true)
+        {
+            isRunning = true;
+            anim.SetFloat("animSpeed", 2.5f);
+        }
+        else
+        {
+            anim.SetFloat("animSpeed", 1f);
+        }
+
 		//Run anim toggle
 		if (isRunning == true) {
 			anim.SetBool ("Run", true);

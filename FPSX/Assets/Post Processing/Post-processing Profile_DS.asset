@@ -49,7 +49,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40b924e2dad56384a8df2a1e111bb675, type: 3}
   m_Name: Vignette
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   enabled:
     overrideState: 1
     value: 1
@@ -96,7 +96,7 @@ MonoBehaviour:
   active: 0
   enabled:
     overrideState: 1
-    value: 1
+    value: 0
   colored:
     overrideState: 0
     value: 1
@@ -108,7 +108,7 @@ MonoBehaviour:
     value: 1.55
   lumContrib:
     overrideState: 1
-    value: 0.8
+    value: 0
 --- !u!114 &-830292888811080765
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -149,6 +149,7 @@ MonoBehaviour:
   - {fileID: -6509022839125101630}
   - {fileID: -6442708060556482100}
   - {fileID: -7348487227076034926}
+  - {fileID: 2531883170822229868}
 --- !u!114 &555370060097843292
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -167,7 +168,7 @@ MonoBehaviour:
     value: 1
   focusDistance:
     overrideState: 1
-    value: 10
+    value: 2.36
   aperture:
     overrideState: 0
     value: 5.6
@@ -177,3 +178,52 @@ MonoBehaviour:
   kernelSize:
     overrideState: 0
     value: 1
+--- !u!114 &2531883170822229868
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1cb7e9e120078f43bce4f0b1be547a7, type: 3}
+  m_Name: AmbientOcclusion
+  m_EditorClassIdentifier: 
+  active: 1
+  enabled:
+    overrideState: 1
+    value: 1
+  mode:
+    overrideState: 1
+    value: 1
+  intensity:
+    overrideState: 1
+    value: 0.6
+  color:
+    overrideState: 1
+    value: {r: 0, g: 0, b: 0, a: 1}
+  ambientOnly:
+    overrideState: 0
+    value: 1
+  noiseFilterTolerance:
+    overrideState: 0
+    value: 0
+  blurTolerance:
+    overrideState: 0
+    value: -4.6
+  upsampleTolerance:
+    overrideState: 0
+    value: -12
+  thicknessModifier:
+    overrideState: 1
+    value: 1.2
+  directLightingStrength:
+    overrideState: 0
+    value: 0
+  radius:
+    overrideState: 1
+    value: 9.4
+  quality:
+    overrideState: 0
+    value: 2
