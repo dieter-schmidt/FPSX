@@ -25,6 +25,9 @@ namespace FPSControllerLPFP
         public float slideSpeed = 35f;
         public float normalGravity = -20f;
         public float gravity = -20f;//-14.72f;//-9.81f;
+        public float descentSpeed = 20f;
+        public float glideDeltaVel = 0f;
+        public float maxGlideSpeed = 50f;
         public float groundPoundMultiplier = 5f;
         public float wallSlideGravity;
         public float wallSlideGravMultiplier = 0.2f;
@@ -57,6 +60,8 @@ namespace FPSControllerLPFP
         bool isHoldingJump = false;
         bool isRotating = false;
         bool isSliding = false;
+        bool isGliding = false;
+        bool isDescending = false;
         public bool isGroundDash = false;
         bool jumped = false;
 
@@ -89,6 +94,9 @@ namespace FPSControllerLPFP
 
         [Tooltip("The transform of the main camera"), SerializeField]
         private Transform mainCamera;
+
+        [Tooltip("The gun camera"), SerializeField]
+        private Camera gunCamera;
 
         [Tooltip("The camera effects controller"), SerializeField]
         public CameraFXController cameraFXController;
@@ -263,7 +271,7 @@ namespace FPSControllerLPFP
             //Lerp slide camera
             //LerpSlideCamera();
 
-            //Debug.Log(wallCollisionStarted);
+            Debug.Log(isGliding);
 
             //rotation testing
             //mainCamera.Rotate(540f * Time.deltaTime, 0f, 0f, Space.Self);
@@ -421,6 +429,7 @@ namespace FPSControllerLPFP
                         groundDashDirection = transform.forward;
                         isGroundDash = true;
                         PlayGroundDashSound();
+                        cameraFXController.startFX("grounddash");
                     }
                 }
                 else
@@ -430,6 +439,7 @@ namespace FPSControllerLPFP
                         _audioSource.Stop();
                     }
                     isGroundDash = false;
+                    cameraFXController.stopFX("grounddash");
                 }
 
                 //Vector3 move = transform.right * x + transform.forward * z;
@@ -486,6 +496,11 @@ namespace FPSControllerLPFP
 
                 if (wasGrounded == false)
                 {
+                    //reset gliding status
+                    glideDeltaVel = 0f;
+                    //velocity.y = launchVelocity.y;
+                    //Debug.Log(velocity.y);
+                    isGliding = false;
                     //temporary solution for regaining airdash after colliding with wall but not jumping
                     wallCollisionStarted = false;
                     //reset wall slide gravity if player hits wall but never jumped
@@ -595,6 +610,77 @@ namespace FPSControllerLPFP
                 }
                 else
                 {
+                    //glide logic - 4/10
+                    if (Input.GetKey(KeyCode.X))
+                    {
+
+                        if (!isGroundPound && !groundPoundStart)
+                        {
+                            if (!isGliding)
+                            {
+                                glideDeltaVel = 0f;
+                            }
+
+                            float groundDot = Vector3.Dot(Vector3.down, gunCamera.transform.forward);
+                            isGliding = true;
+
+                            //Vector3 deltaV;
+                            //float deltaV;
+
+                            //looking below world horizontal
+                            if (groundDot > 0f)
+                            {
+                                //descend
+                                isDescending = true;
+                                glideDeltaVel += groundDot * descentSpeed;
+                                //velocity += deltaV;
+                                //velocity.y += deltaV.y;
+                                //Debug.Log(deltaV);
+                                //velocity.y = deltaV.y;
+                                //velocity += gunCamera.transform.forward * deltaV;
+                                controller.Move(Mathf.Min(glideDeltaVel, maxGlideSpeed) * gunCamera.transform.forward * Time.deltaTime);
+
+                                //velocity = deltaV;
+                            }
+                            else
+                            {
+                                //ascend - reflect velocity.y when switching from ascend to descend
+                                isDescending = false;
+                                //if (isDescending)
+                                //{
+                                //    isDescending = false;
+                                //    //velocity.y *= -1f;
+                                //    //isGliding = false;
+                                //    //velocity.y = 0;
+                                //}
+                                //else
+                                //{
+                                glideDeltaVel += groundDot * descentSpeed;//1f+groundDot
+                                //velocity.y += deltaV.y + 2*gravity*Time.deltaTime;
+                                //velocity.y = deltaV.y;
+                                //velocity -= gunCamera.transform.forward * deltaV;
+                                controller.Move(Mathf.Min(glideDeltaVel, maxGlideSpeed) * gunCamera.transform.forward * Time.deltaTime);
+                                //controller.Move(Mathf.Min(glideDeltaVel, maxGlideSpeed) * gunCamera.transform.forward * Time.deltaTime);
+                                //Debug.Log(glideDeltaVel);
+
+                                //velocity = deltaV;
+                                //}
+
+                            }
+                            //Debug.Log(gunCamera.transform.forward);
+                            
+                            //velocity += gunCamera.transform.forward * descentSpeed;
+                            launchVelocity = Mathf.Min(glideDeltaVel, maxGlideSpeed) * gunCamera.transform.forward;
+                        }
+                    }
+                    else
+                    {
+                        glideDeltaVel = 0f;
+                        //velocity.y = launchVelocity.y;
+                        //Debug.Log(velocity.y);
+                        isGliding = false;
+                    }
+
                     //Air Dash Logic
                     if (Input.GetAxis("Fire3") > 0)
                     {
@@ -650,7 +736,7 @@ namespace FPSControllerLPFP
 
                     //Only allow air control for sideways and backwards movement post jump
                     //TODO - add forward air control if launchvelocity is less than airspeed
-                    if (!groundPoundStart && !isGroundPound && !isAirDashing)// && !isCollidingWithWall)
+                    if (!groundPoundStart && !isGroundPound && !isAirDashing && !isGliding)// && !isCollidingWithWall)
                     {
 
                         velocity = new Vector3(launchVelocity.x, velocity.y, launchVelocity.z);
@@ -775,7 +861,7 @@ namespace FPSControllerLPFP
 
             }
             //added wallcollisionstarted check - 4/8
-            if (!groundPoundStart && !isGroundPound &&!isAirDashing && !wallCollisionStarted)
+            if (!groundPoundStart && !isGroundPound &&!isAirDashing && !wallCollisionStarted && !isGliding)
             {
                 //if (!isGrounded)
                 //{

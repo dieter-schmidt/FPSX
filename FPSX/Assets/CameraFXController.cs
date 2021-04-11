@@ -25,7 +25,7 @@ public class CameraFXController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(timeController.getIsStable());
+        //Debug.Log(timeController.getIsStable());
         if (timeController.getIsStable() == false)
         {
             scaleFXWithTime();
@@ -79,6 +79,9 @@ public class CameraFXController : MonoBehaviour
             case "timescale":
                 brightConSat.enabled = true;
                 break;
+            case "grounddash":
+                radialBlur.enabled = true;
+                break;
             default:
                 break;
         }
@@ -93,6 +96,9 @@ public class CameraFXController : MonoBehaviour
                 break;
             case "timescale":
                 grayScale.enabled = false;
+                break;
+            case "grounddash":
+                radialBlur.enabled = false;
                 break;
             default:
                 break;
