@@ -80,6 +80,7 @@ public class CameraFXController : MonoBehaviour
                 brightConSat.enabled = true;
                 break;
             case "grounddash":
+            case "glide":
                 radialBlur.enabled = true;
                 break;
             default:
@@ -98,6 +99,7 @@ public class CameraFXController : MonoBehaviour
                 grayScale.enabled = false;
                 break;
             case "grounddash":
+            case "glide":
                 radialBlur.enabled = false;
                 break;
             default:

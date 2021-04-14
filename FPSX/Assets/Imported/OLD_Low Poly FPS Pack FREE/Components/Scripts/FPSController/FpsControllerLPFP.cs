@@ -79,6 +79,7 @@ namespace FPSControllerLPFP
         private float tripleJumpStartTime;
         private float degreesRotated = 0;
         private Vector3 groundNormal = Vector3.zero;
+        private Vector3 wallNormal = Vector3.zero;
 
         private int tripleJumpContacts = 0;
 
@@ -131,6 +132,9 @@ namespace FPSControllerLPFP
 
         [Tooltip("The audio clip that is played when sliding"), SerializeField]
         private AudioClip landSound;
+
+        [Tooltip("The audio clip that is played when gliding"), SerializeField]
+        private AudioClip glideSound;
 
         [Header("Movement Settings")]
         [Tooltip("How fast the player moves while walking and strafing."), SerializeField]
@@ -271,7 +275,7 @@ namespace FPSControllerLPFP
             //Lerp slide camera
             //LerpSlideCamera();
 
-            Debug.Log(isGliding);
+            //Debug.Log(isGliding);
 
             //rotation testing
             //mainCamera.Rotate(540f * Time.deltaTime, 0f, 0f, Space.Self);
@@ -296,6 +300,18 @@ namespace FPSControllerLPFP
             moved = controller.transform.position - lastPos;
             lastPos = controller.transform.position;
             playerVel = moved / Time.deltaTime;
+
+            //turn on wall slide gravity if falling while contacting wall
+            if (playerVel.y < 0 && wallCollisionStarted) 
+            {
+                wallSlideGravity = gravity * wallSlideGravMultiplier;
+            }
+            else
+            {
+                wallSlideGravity = gravity;
+            }
+            Debug.Log(wallCollisionStarted);
+
 
             //if (!isCollidingWithWall && !wallJumped)
             //{
@@ -454,7 +470,8 @@ namespace FPSControllerLPFP
                 }
                 else
                 {
-                    if (run > 0)
+                    //only sprint if going forward or diagonal forward - 4/13
+                    if (run > 0 && z > 0.4f)
                     {
 
                         //velocity.x += Mathf.Min(move.x * accel, maxRunSpeed - velocity.x);
@@ -618,6 +635,8 @@ namespace FPSControllerLPFP
                         {
                             if (!isGliding)
                             {
+                                cameraFXController.startFX("glide");
+                                PlayGlideSound();
                                 glideDeltaVel = 0f;
                             }
 
@@ -679,6 +698,7 @@ namespace FPSControllerLPFP
                         //velocity.y = launchVelocity.y;
                         //Debug.Log(velocity.y);
                         isGliding = false;
+                        cameraFXController.stopFX("glide");
                     }
 
                     //Air Dash Logic
@@ -1176,6 +1196,16 @@ namespace FPSControllerLPFP
             //}
         }
 
+        private void PlayGlideSound()
+        {
+            _audioSource.clip = glideSound;
+            _audioSource.loop = false;
+            //if (!_audioSource.isPlaying)
+            //{
+            _audioSource.Play();
+            //}
+        }
+
         private void PlayLandSound()
         {
             _audioSource.clip = landSound;
@@ -1327,11 +1357,11 @@ namespace FPSControllerLPFP
 
         private void OnTriggerExit(Collider other)
         {
-            
-            if (other.gameObject.tag == "Wall")
-            {
-                //isCollidingWithWall = false;
-            }
+            //Debug.Log("COLLISION EXIT");
+            //if (other.gameObject.tag == "Wall")
+            //{
+            //    launchVelocity = wallJumpDirection * 18f;
+            //}
         }
 
         private void OnCollisionExit(Collision collision)
@@ -1399,16 +1429,27 @@ namespace FPSControllerLPFP
                 //collide with wall
                 if (hit.normal.y < 0.05f)
                 {
-                    Debug.Log(hit.normal.y);
+                    //Debug.Log(hit.normal.y);
                     if (!wallCollisionStarted)
                     {
+                        PlaySlideSound();
                         //reduce velocity while sliding on wall - 4/8
-                        wallSlideGravity = gravity * wallSlideGravMultiplier;
+                        if (velocity.y < 0)
+                        {
+                            wallSlideGravity = gravity * wallSlideGravMultiplier;
+                        }
+                        else
+                        {
+                            wallSlideGravity = gravity;
+                        }
+                        //wallSlideGravity = gravity * wallSlideGravMultiplier;
                         //test - reduce wallslide velocity
-                        launchVelocity = new Vector3(velocity.x*0.75f, velocity.y/2f, velocity.z/0.75f);
+                        launchVelocity = new Vector3(velocity.x*0.7f, velocity.y/2f, velocity.z*0.7f);
 
                         wallJumpDirection = hit.normal;
                         wallCollisionStarted = true;
+                        //used for post wall contact air momentum (in direction of wall plane) - 4/13
+                        wallNormal = hit.normal;
                     }
                     float dot = Vector3.Dot(hit.normal, new Vector3(playerVel.x, 0f, playerVel.z).normalized);
                     //if 45 degrees to wall or less, reflect motion angle over wall normal.  Wall jump vertical angle set to 45 degrees
@@ -1437,16 +1478,39 @@ namespace FPSControllerLPFP
 
         public void OnTriggerColliderEnter(Collider other)
         {
-
-            //if (other.transform.gameObject.tag == "Wall")
+            //get normal of wall - used to reset air speed after collision stops
+            RaycastHit hit;
+            //Vector3 groundNormal;
+            //Vector3 castPosition = new Vector3(transform.position.x - ((controller.radius / 2) - controller.skinWidth), transform.position.y, transform.position.z);
+            //Vector3 castDirection = new Vector3(velocity.x, 0f, velocity.z).normalized;
+            //if (Physics.Raycast(transform.position, castDirection, out hit, 3f))
             //{
 
             //}
+
+
         }
 
         public void OnTriggerColliderExit(Collider other)
         {
-
+            //reset air speed if character contacts and leaves wall without jumping
+            
+            if (other.gameObject.tag == "Wall")
+            {
+                //Debug.Log("COLLISION EXIT");
+                //launchVelocity = wallJumpDirection * 18f;
+                //reset from wall slide
+                //launchVelocity.y *= 2f;
+                wallSlideGravity = gravity;
+                if (!wallJumped)
+                {
+                    wallCollisionStarted = false;
+                    launchVelocity = Vector3.ProjectOnPlane(velocity, wallNormal);
+                    velocity = Vector3.ProjectOnPlane(velocity, wallNormal);
+                }
+                //Debug.Log(wallNormal);
+                //project movement to wall plane after collision ends (instead of maintaining)
+            }
         }
 
         public bool getIsGrounded()
