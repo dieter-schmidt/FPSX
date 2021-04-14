@@ -20,6 +20,7 @@ namespace FPSControllerLPFP
         public float airDashSpeed = 50f;
         public float groundDashSpeed = 20f;
         public float postAirDashSpeed = 27f;
+        public float postAirDashJumpSpeed = 30f;
         public float runSpeed = 27f;
         public float airSpeed = 1f;
         public float slideSpeed = 35f;
@@ -591,6 +592,7 @@ namespace FPSControllerLPFP
                 {
                     //retrieve velocity on last frame before jump
                     //launchVelocity = move * speed;
+                    //launchVelocity = playerVel;
                     launchVelocity = controller.velocity;// velocity;
                 }
             }
@@ -967,7 +969,17 @@ namespace FPSControllerLPFP
             airDashDirection = (transform.right * x + transform.forward * z).normalized;
 
             //limits air control after dash finishes
-            launchVelocity = airDashDirection * postAirDashSpeed; //airSpeed;// launchVelocity.magnitude;
+            //allow momentum conservation if jumping mid-airdash - 4/13
+            if (jumped)
+            {
+                launchVelocity = airDashDirection * postAirDashSpeed; //airSpeed;// launchVelocity.magnitude;
+            }
+            else
+            {
+                //mid-airdash jump speed (DKC jump)
+                launchVelocity = airDashDirection * postAirDashJumpSpeed; //airSpeed;// launchVelocity.magnitude;
+            }
+            
             velocity.y = 0;
             isAirDashing = true;
             airDashesUsed = 1;
