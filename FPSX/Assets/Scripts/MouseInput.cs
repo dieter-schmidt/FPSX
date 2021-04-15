@@ -29,6 +29,12 @@ public class MouseInput : MonoBehaviour
     public float recoilTimeElapsed = 0f;
     public float recenterTimeElapsed = 0f;
 
+    private float newRecoilRotation = 0f;
+    private float recoilRotationDelta = 0f;
+
+    private bool isRecoiling = false;
+    private bool isRecentering = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -43,7 +49,17 @@ public class MouseInput : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        Debug.Log("isRecoiling = " + isRecoiling + " isRecentering = " + isRecentering);
+        //update recoil camera movement
+        if (isRecoiling)
+        {
+            UpdateRecoil();
+        }
+        else if (isRecentering)
+        {
+            UpdateRecenter();
+        }
+
         //consistent across variable frame rate
         //float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         //float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
@@ -147,12 +163,30 @@ public class MouseInput : MonoBehaviour
                 //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
                 if (!playerController.isGroundDash)
                 {
-                    transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                    if (isRecoiling || isRecentering)
+                    {
+                        xRotation += recoilRotationDelta;
+                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                    }
+                    else
+                    {
+                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                    }
+                    //transform.parent.transform.Rotate(xRotation, 0f, 0f);
                     playerBody.Rotate(Vector3.up * mouseX);
                 }
                 else
                 {
-                    transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                    if (isRecoiling || isRecentering)
+                    {
+                        xRotation -= recoilRotationDelta;
+                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                    }
+                    else
+                    {
+                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                    }
+                    //transform.parent.transform.Rotate(xRotation, 0f, 0f);
                     //mainCamera.transform.localRotation = Quaternion.Euler(xRotation, -yRotation, 0f);
                     //transform.parent.parent.Rotate(Vector3.up * yRotation);
                 }
@@ -179,23 +213,79 @@ public class MouseInput : MonoBehaviour
         //rotate around Y axis
         //playerBody.Rotate(Vector3.up * mouseX);
         //transform.Rotate(transform.up * mouseX);
+
+        
     }
 
 
     public void ApplyRecoil()
     {
-        float newRecoilRotation;
+        if (isRecoiling)
+        {
+            //reset recoil vars and start new recoil
+            //recoilRotationDelta = 0f;
+            recoilTimeElapsed = 0f;
+        }
+        if (isRecentering)
+        {
+            //reset recenter vars
+            recenterTimeElapsed = 0f;
+            isRecentering = false;
+        }
+        recoilRotationDelta = 0f;
+        isRecoiling = true;
+        newRecoilRotation = 0f;
+    }
+
+    public void UpdateRecoil()
+    {
+        float oldRecoilRotation = newRecoilRotation;
         if (recoilTimeElapsed < recoilLerpDuration)
         {
-            newRecoilRotation = Mathf.Lerp(0f, recoilRotation, recoilTimeElapsed / recoilLerpDuration);
+            //upwards recoil
+            newRecoilRotation = Mathf.Lerp(0f, recoilRotation, recoilTimeElapsed / recoilLerpDuration) * -1f;
             newRecoilRotation = Mathf.Clamp(newRecoilRotation, -90f, 90f);
-            transform.parent.transform.localRotation = Quaternion.Euler(newRecoilRotation, 0f, 0f);
+            //newRecoilRotation = -0.1f;
+            //transform.parent.transform.localRotation = Quaternion.Euler(newRecoilRotation, 0f, 0f);
+            //transform.parent.transform.Rotate(-newRecoilRotation, 0f, 0f);
+            recoilRotationDelta = newRecoilRotation - oldRecoilRotation;
             recoilTimeElapsed += Time.deltaTime;
+            //Debug.Log(newRecoilRotation);
+        }
+        else
+        {
+            //end recoil state and reset vars
+            isRecoiling = false;
+            isRecentering = true;
+            //recoilRotationDelta = 0f;
+            newRecoilRotation = 0f;
+            recoilTimeElapsed = 0f;
         }
 
         //old recoil logic
         //xRotation -= 2.5f;
         //xRotation = Mathf.Clamp(xRotation, -90f, 90f);
         //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+    }
+
+    public void UpdateRecenter()
+    {
+        float oldRecoilRotation = newRecoilRotation;
+        if (recenterTimeElapsed < recenterLerpDuration)
+        {
+            //recentering post-recoil
+            newRecoilRotation = Mathf.Lerp(0f, recoilRotation, recenterTimeElapsed / recenterLerpDuration);
+            newRecoilRotation = Mathf.Clamp(newRecoilRotation, -90f, 90f);
+            //transform.parent.transform.localRotation = Quaternion.Euler(-newRecoilRotation, 0f, 0f);
+            recoilRotationDelta = newRecoilRotation - oldRecoilRotation;
+            recenterTimeElapsed += Time.deltaTime;
+        }
+        else
+        {
+            //end recenter state and reset vars
+            isRecentering = false;
+            recenterTimeElapsed = 0f;
+            newRecoilRotation = 0f;
+        }
     }
 }

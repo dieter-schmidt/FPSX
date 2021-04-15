@@ -284,7 +284,7 @@ namespace FPSControllerLPFP
             //Lerp slide camera
             //LerpSlideCamera();
 
-            Debug.Log(_audioSource.clip);
+            //Debug.Log(_audioSource.clip);
 
             //rotation testing
             //mainCamera.Rotate(540f * Time.deltaTime, 0f, 0f, Space.Self);

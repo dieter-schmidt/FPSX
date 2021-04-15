@@ -723,7 +723,7 @@ public class HandgunScriptLPFP : MonoBehaviour {
             //    sr.InduceStress(0.5f);
             //}
             //recoil logic
-            //GetComponent<MouseInput>().ApplyRecoil();
+            GetComponent<MouseInput>().ApplyRecoil();
             //transform.Rotate(new Vector3(-2.5f, 0f, 0f), Space.Self);
             //Transform t = transform.parent.transform;
             //t.localRotation = new Quaternion(t.localRotation.x + 2.5f, t.localRotation.y, t.localRotation.z, t.localRotation.w);//  Quaternion.Euler(2.5f, 0f, 0f);
