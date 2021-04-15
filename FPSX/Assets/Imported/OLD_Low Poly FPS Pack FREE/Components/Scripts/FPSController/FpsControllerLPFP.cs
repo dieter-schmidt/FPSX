@@ -19,6 +19,7 @@ namespace FPSControllerLPFP
         public float speed = 18f;//not used currently
         public float airDashSpeed = 50f;
         public float groundDashSpeed = 20f;
+        public float skidSpeed;
         public float postAirDashSpeed = 27f;
         public float postAirDashJumpSpeed = 30f;
         public float runSpeed = 27f;
@@ -36,6 +37,7 @@ namespace FPSControllerLPFP
         public float jumpVelocity = 20f;
         public float shortJumpHeight = 1.25f;
         public float slideLerpDuration = 0.5f;
+        public float skidLerpDuration = 1f;
         private float timeElapsed = 0f;
 
         //scale to gravity
@@ -56,6 +58,7 @@ namespace FPSControllerLPFP
         bool isAirDashing = false;
         //makes sure sprint is released after jumping before air dash is available
         bool sprintReleased = false;
+        bool airDashReleased = true;
         bool wallJumped = false;
         bool isCollidingWithWall = false;
         bool isHoldingJump = false;
@@ -64,6 +67,7 @@ namespace FPSControllerLPFP
         bool isGliding = false;
         bool isDescending = false;
         public bool isGroundDash = false;
+        public bool isSkidding = false;
         bool jumped = false;
 
         //the wall the character jumped off of
@@ -75,7 +79,7 @@ namespace FPSControllerLPFP
         Vector3 groundDashDirection;
 
         private int airDashesUsed = 0;
-        private int airDashesAllowed = 1;
+        private int airDashesAllowed = 2;//1;
         private float gpJumpStartTime;
         private float tripleJumpStartTime;
         private float degreesRotated = 0;
@@ -137,6 +141,9 @@ namespace FPSControllerLPFP
         [Tooltip("The audio clip that is played when gliding"), SerializeField]
         private AudioClip glideSound;
 
+        [Tooltip("The audio clip that is played when skidding"), SerializeField]
+        private AudioClip skidSound;
+
         [Header("Movement Settings")]
         [Tooltip("How fast the player moves while walking and strafing."), SerializeField]
         private float walkingSpeed = 5f;
@@ -194,6 +201,7 @@ namespace FPSControllerLPFP
         private void Start()
         {
             wallSlideGravity = gravity;
+            //skidSpeed = runSpeed;
             lastPos = transform.position;
             //Debug.Log("BEHIND OR SIDE");
             //_rigidbody = GetComponent<Rigidbody>();
@@ -276,7 +284,7 @@ namespace FPSControllerLPFP
             //Lerp slide camera
             //LerpSlideCamera();
 
-            //Debug.Log(isGliding);
+            Debug.Log(_audioSource.clip);
 
             //rotation testing
             //mainCamera.Rotate(540f * Time.deltaTime, 0f, 0f, Space.Self);
@@ -311,7 +319,7 @@ namespace FPSControllerLPFP
             {
                 wallSlideGravity = gravity;
             }
-            Debug.Log(wallCollisionStarted);
+            //Debug.Log(wallCollisionStarted);
 
 
             //if (!isCollidingWithWall && !wallJumped)
@@ -451,12 +459,23 @@ namespace FPSControllerLPFP
                 }
                 else
                 {
-                    if (_audioSource.isPlaying)
+                    //transition to skid state - 4/14
+                    if (isGroundDash)
                     {
-                        _audioSource.Stop();
+                        isSkidding = true;
+                        timeElapsed = 0f;
+                        PlaySkidSound();
+                        StartCoroutine(SkidCoroutine());
                     }
+
+                    //if (_audioSource.isPlaying)
+                    //{
+                    //    _audioSource.Stop();
+                    //}
                     isGroundDash = false;
                     cameraFXController.stopFX("grounddash");
+
+
                 }
 
                 //Vector3 move = transform.right * x + transform.forward * z;
@@ -468,6 +487,16 @@ namespace FPSControllerLPFP
                 {
                     //controller.Move(move * groundDashSpeed * Time.deltaTime);
                     controller.Move(groundDashDirection * groundDashSpeed * Time.deltaTime);
+                }
+                else if (isSkidding)
+                {
+                    float newSkidSpeed;
+                    if (timeElapsed < skidLerpDuration)
+                    {
+                        newSkidSpeed = Mathf.Lerp(skidSpeed, 0f, timeElapsed/skidLerpDuration);
+                        controller.Move(groundDashDirection * newSkidSpeed * Time.deltaTime);
+                        timeElapsed += Time.deltaTime;
+                    }
                 }
                 else
                 {
@@ -706,8 +735,9 @@ namespace FPSControllerLPFP
                     //Air Dash Logic
                     if (Input.GetAxis("Fire3") > 0)
                     {
-                        if (!isAirDashing && airDashesUsed < airDashesAllowed && sprintReleased && !isGroundPound && !groundPoundStart)
+                        if (!isAirDashing && airDashesUsed < airDashesAllowed && sprintReleased && !isGroundPound && !groundPoundStart && airDashReleased)
                         {
+                            airDashReleased = false;
                             StartCoroutine(AirDashCoroutine());
                         }
                         //else
@@ -715,6 +745,11 @@ namespace FPSControllerLPFP
                         //    controller.Move(airDashDirection * airDashSpeed * Time.deltaTime);
                         //}
                         
+                    }
+                    else
+                    {
+                        //force air dash button release before repress - 4/14
+                        airDashReleased = true;
                     }
                     if (isAirDashing && !wallCollisionStarted)
                     {
@@ -1008,6 +1043,12 @@ namespace FPSControllerLPFP
             wallCollisionStarted = false;
         }
 
+        IEnumerator SkidCoroutine()
+        {
+            yield return new WaitForSeconds(skidLerpDuration);
+            isSkidding = false;
+        }
+
         private void RotateCameraAndCharacter()
         {
    //         var rotationX = _rotationX.Update(RotationXRaw, rotationSmoothness);
@@ -1253,6 +1294,17 @@ namespace FPSControllerLPFP
         {
             //Debug.Log("GP START SOUND");
             _audioSource.clip = slideSound;
+            _audioSource.loop = false;
+            //if (!_audioSource.isPlaying)
+            //{
+            _audioSource.Play();
+            //}
+        }
+
+        private void PlaySkidSound()
+        {
+            Debug.Log("SKID SOUND");
+            _audioSource.clip = skidSound;
             _audioSource.loop = false;
             //if (!_audioSource.isPlaying)
             //{

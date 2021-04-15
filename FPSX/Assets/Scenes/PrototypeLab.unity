@@ -4182,7 +4182,9 @@ MonoBehaviour:
   speed: 16
   airDashSpeed: 90
   groundDashSpeed: 20
+  skidSpeed: 0
   postAirDashSpeed: 10
+  postAirDashJumpSpeed: 30
   runSpeed: 24
   airSpeed: 4
   slideSpeed: 36
@@ -4198,6 +4200,7 @@ MonoBehaviour:
   jumpVelocity: 30
   shortJumpHeight: 4
   slideLerpDuration: 0.15
+  skidLerpDuration: 1
   fastFallScale: 3
   gpSuperJumpInterval: 0.05
   tripleJumpInterval: 0.1
@@ -4208,6 +4211,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   isGroundDash: 0
+  isSkidding: 0
   preWallJumpVelocity: {x: 0, y: 0, z: 0}
   arms: {fileID: 1582489482}
   armPosition: {x: 0, y: 0, z: 0}
@@ -4225,6 +4229,7 @@ MonoBehaviour:
   slideSound: {fileID: 8300000, guid: cc3c130e8eb4b254ca198922b8649215, type: 3}
   landSound: {fileID: 8300000, guid: b3e9cdac26b78934197456d8199e30bc, type: 3}
   glideSound: {fileID: 0}
+  skidSound: {fileID: 0}
   walkingSpeed: 5
   runningSpeed: 9
   movementSmoothness: 0.125
@@ -21118,7 +21123,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 971cbe2258f0bab4086562e4d351a413, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.64
+  m_Volume: 0.6
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -44239,6 +44244,14 @@ PrefabInstance:
       propertyPath: landSound
       value: 
       objectReference: {fileID: 8300000, guid: b3e9cdac26b78934197456d8199e30bc, type: 3}
+    - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
+      propertyPath: skidSound
+      value: 
+      objectReference: {fileID: 8300000, guid: a1b807be17bb21349909ef358425521e, type: 3}
+    - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
+      propertyPath: skidSpeed
+      value: 40
+      objectReference: {fileID: 0}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: controller
       value: 

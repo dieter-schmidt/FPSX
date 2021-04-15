@@ -23,6 +23,12 @@ public class MouseInput : MonoBehaviour
     float xRotation;
     float yRotation;
 
+    public float recoilLerpDuration = 0.20f;
+    public float recenterLerpDuration = 0.30f;
+    public float recoilRotation = 3f;
+    public float recoilTimeElapsed = 0f;
+    public float recenterTimeElapsed = 0f;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -178,8 +184,18 @@ public class MouseInput : MonoBehaviour
 
     public void ApplyRecoil()
     {
-        xRotation -= 2.5f;
-        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
-        transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        float newRecoilRotation;
+        if (recoilTimeElapsed < recoilLerpDuration)
+        {
+            newRecoilRotation = Mathf.Lerp(0f, recoilRotation, recoilTimeElapsed / recoilLerpDuration);
+            newRecoilRotation = Mathf.Clamp(newRecoilRotation, -90f, 90f);
+            transform.parent.transform.localRotation = Quaternion.Euler(newRecoilRotation, 0f, 0f);
+            recoilTimeElapsed += Time.deltaTime;
+        }
+
+        //old recoil logic
+        //xRotation -= 2.5f;
+        //xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
     }
 }
