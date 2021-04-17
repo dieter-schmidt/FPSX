@@ -49,7 +49,7 @@ public class MouseInput : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log("isRecoiling = " + isRecoiling + " isRecentering = " + isRecentering);
+        //Debug.Log("isRecoiling = " + isRecoiling + " isRecentering = " + isRecentering);
         //update recoil camera movement
         if (isRecoiling)
         {
@@ -112,8 +112,13 @@ public class MouseInput : MonoBehaviour
         //Vector2 mousePos = new Vector2();
         //mousePos.x = currentEvent.mousePosition.x;
         //mousePos.y = mainCamera.pixelHeight - currentEvent.mousePosition.y;
+
+        //get flip rotation from player script
+        float flipRotationDelta = playerController.getDegreesRotated();
+
         switch (gunController.fireMode)
         {
+
             case FireMode.Fixed:
                 if (Input.GetButton("Fire2"))
                 {
@@ -142,7 +147,11 @@ public class MouseInput : MonoBehaviour
                     //    crossHairContainerSecond.transform.position = mainCamera.ScreenToWorldPoint(new Vector3(crossHairOrigin.transform.position.x + crossHairOrigin.transform.position.x - Input.mousePosition.x, Input.mousePosition.y - crossHairOrigin.transform.position.y, (mainCamera.nearClipPlane + 0.01f)));// mainCamera.nearClipPlane
                     //}
                 }
-                
+
+                //flip rotation
+                float currentRotationX = transform.parent.transform.localRotation.x;
+                transform.parent.transform.localRotation = Quaternion.Euler(currentRotationX - flipRotationDelta, 0f, 0f);// Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+
                 //rotate fixed camera with wsad
                 //xRotation -= move.x * mouseSensitivity * (1 / Time.timeScale) * Time.deltaTime;
                 //xRotation = Mathf.Clamp(xRotation, -90f, 90f);
@@ -154,7 +163,9 @@ public class MouseInput : MonoBehaviour
             case FireMode.Free:
                 
                 xRotation -= mouseY;
-                xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+                //xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+                //get flip rotation from player script - 4/17
+                //float flipRotationDelta = playerController.getDegreesRotated();
 
                 //used for ground dash only
                 yRotation -= mouseX;
@@ -166,11 +177,11 @@ public class MouseInput : MonoBehaviour
                     if (isRecoiling || isRecentering)
                     {
                         xRotation += recoilRotationDelta;
-                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
                     }
                     else
                     {
-                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
                     }
                     //transform.parent.transform.Rotate(xRotation, 0f, 0f);
                     playerBody.Rotate(Vector3.up * mouseX);

@@ -284,14 +284,29 @@ namespace FPSControllerLPFP
             //Lerp slide camera
             //LerpSlideCamera();
 
-            //Debug.Log(_audioSource.clip);
+            Debug.Log(isRotating);
 
             //rotation testing
             //mainCamera.Rotate(540f * Time.deltaTime, 0f, 0f, Space.Self);
+
+            //testing this logic with mouseinput - 4/17
+            //if (isRotating)
+            //{
+            //    float newRotation = Mathf.Clamp(540f * Time.deltaTime, 0f, 360f - degreesRotated);
+            //    mainCamera.Rotate(-newRotation, 0f, 0f, Space.Self);
+            //    degreesRotated += newRotation;
+
+            //    if (degreesRotated == 360f)
+            //    {
+            //        isRotating = false;
+            //        degreesRotated = 0;
+            //    }
+            //}
+
             if (isRotating)
             {
                 float newRotation = Mathf.Clamp(540f * Time.deltaTime, 0f, 360f - degreesRotated);
-                mainCamera.Rotate(-newRotation, 0f, 0f, Space.Self);
+                //mainCamera.Rotate(-newRotation, 0f, 0f, Space.Self);
                 degreesRotated += newRotation;
 
                 if (degreesRotated == 360f)
@@ -300,7 +315,7 @@ namespace FPSControllerLPFP
                     degreesRotated = 0;
                 }
             }
-            
+
 
             //Debug.Log(velocity.y);
 
@@ -1599,6 +1614,11 @@ namespace FPSControllerLPFP
                 mainCamera.transform.localPosition = new Vector3(0f, Mathf.Lerp(-controller.height / 2.5f, 0f, timeElapsed/slideLerpDuration), 0f);
                 timeElapsed += Time.deltaTime;
             }
+        }
+
+        public float getDegreesRotated()
+        {
+            return this.degreesRotated;
         }
     }
 
