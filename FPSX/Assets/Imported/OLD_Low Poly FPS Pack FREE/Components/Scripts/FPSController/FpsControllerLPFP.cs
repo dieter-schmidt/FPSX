@@ -1536,6 +1536,12 @@ namespace FPSControllerLPFP
                     {
                         if (Input.GetButtonDown("Jump"))
                         {
+                            //rotate during wall jump - 4/19
+                            if (Input.GetKey(KeyCode.Mouse2))
+                            {
+                                isRotating = true;
+                            }
+
                             //allow airdash post-wall jump
                             airDashesUsed = 0;
 

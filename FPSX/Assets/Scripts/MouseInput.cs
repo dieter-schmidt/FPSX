@@ -168,8 +168,8 @@ public class MouseInput : MonoBehaviour
                 //float flipRotationDelta = playerController.getDegreesRotated();
 
                 //used for ground dash only
-                yRotation -= mouseX;
-                yRotation = Mathf.Clamp(yRotation, -45f, 45f);
+                yRotation += mouseX;
+                //yRotation = Mathf.Clamp(yRotation, -45f, 45f);
 
                 //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
                 if (!playerController.isGroundDash)
@@ -178,13 +178,21 @@ public class MouseInput : MonoBehaviour
                     {
                         xRotation += recoilRotationDelta;
                         transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+                        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, yRotation, 0f);
+                        //transform.parent.transform.localRotation = Quaternion.Euler(0f, yRotation, 0f);
+                        //transform.parent.transform.Rotate(transform.parent.transform.up * mouseX, Space.Self);
                     }
                     else
                     {
                         transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+                        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, yRotation, 0f);
+                        //transform.parent.transform.localRotation = Quaternion.Euler(0f, yRotation, 0f);
+                        //transform.parent.transform.Rotate(transform.parent.transform.up * mouseX, Space.Self);
                     }
                     //transform.parent.transform.Rotate(xRotation, 0f, 0f);
                     playerBody.Rotate(Vector3.up * mouseX);
+                    //playerBody.Rotate(0f, Vector3.Dot(transform.parent.transform.up, Vector3.up) * mouseX, 0f, Space.Self);
+                    //transform.parent.transform.Rotate(Vector3.up * mouseX);
                 }
                 else
                 {

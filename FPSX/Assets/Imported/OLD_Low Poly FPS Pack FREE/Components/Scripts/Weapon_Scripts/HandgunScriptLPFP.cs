@@ -3,6 +3,8 @@ using System.Collections;
 using UnityEngine.UI;
 using FPSControllerLPFP;
 using FPSModes;
+using DamageNumbersPro;
+using System.Collections.Generic;
 
 // ----- Low Poly FPS Pack Free Version -----
 
@@ -39,6 +41,9 @@ public class HandgunScriptLPFP : MonoBehaviour {
     public GameObject crossHairContainerSecond;
     public GameObject canvasFixed;
     public GameObject canvasFree;
+
+    public GameObject baseCanvas;
+    public DamageNumber damageNumber;
 
     public FpsControllerLPFP movementController;
 
@@ -213,8 +218,11 @@ public class HandgunScriptLPFP : MonoBehaviour {
 
 	private void Awake () 
 	{
-		//Set the animator component
-		anim = GetComponent<Animator>();
+        //assign damage numbers
+        //numberPrefabs.Add(baseCanvas.GetComponentInChildren<DamageNumber>());
+
+        //Set the animator component
+        anim = GetComponent<Animator>();
 		//Set current ammo to total ammo value
 		currentAmmo = ammo;
 
@@ -742,6 +750,12 @@ public class HandgunScriptLPFP : MonoBehaviour {
                         //change material on hit
                         //enemy.GetComponent<Renderer>().material = bulletHitMaterial;
                         target.GetComponent<Renderer>().material = bulletHitMaterial;
+
+                        //spawn damage numbers - 4/17
+                        //numberPrefabs[0].CreateNew(100f, baseCanvas.transform.pos);
+                        //Vector3 damageNumberPos = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width / 2f, Screen.height / 2f, (mainCamera.nearClipPlane + 5f)));
+                        //damageNumber.CreateNew(100f, new Vector3(186f, 2.5f, -111.5f));
+
                         break;
                     case ("ExplosiveBarrel"):
                         target.GetComponent<ExplosiveBarrelScript>().explode = true;
