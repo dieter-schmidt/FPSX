@@ -20,7 +20,8 @@ namespace FPSModes
     public enum FireMode
     {
         Free,
-        Fixed
+        Fixed,
+        Flip
     }
 }
 
@@ -1065,6 +1066,11 @@ public class HandgunScriptLPFP : MonoBehaviour {
     public bool getIsReloading()
     {
         return this.isReloading;
+    }
+
+    public void setFireMode(FireMode fMode)
+    {
+        fireMode = fMode;
     }
 }
 // ----- Low Poly FPS Pack Free Version -----

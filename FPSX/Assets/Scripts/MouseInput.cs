@@ -32,8 +32,14 @@ public class MouseInput : MonoBehaviour
     private float newRecoilRotation = 0f;
     private float recoilRotationDelta = 0f;
 
+    private float mouseDegreesRotated = 0f;
+    private float degreesRotated = 0f;
+    private float newRotationDelta = 0f;
+
     private bool isRecoiling = false;
     private bool isRecentering = false;
+
+
 
     // Start is called before the first frame update
     void Start()
@@ -49,6 +55,8 @@ public class MouseInput : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //Debug.Log(playerBody.rotation);
+
         //Debug.Log("isRecoiling = " + isRecoiling + " isRecentering = " + isRecentering);
         //update recoil camera movement
         if (isRecoiling)
@@ -115,6 +123,8 @@ public class MouseInput : MonoBehaviour
 
         //get flip rotation from player script
         float flipRotationDelta = playerController.getDegreesRotated();
+        Vector3 flipAxis = playerController.getWorldRotationAxis();
+        float flipRotationIncrement = playerController.getNewRotationDelta();
 
         switch (gunController.fireMode)
         {
@@ -162,7 +172,7 @@ public class MouseInput : MonoBehaviour
 
             case FireMode.Free:
                 
-                xRotation -= mouseY;
+                //xRotation -= mouseY;
                 //xRotation = Mathf.Clamp(xRotation, -90f, 90f);
                 //get flip rotation from player script - 4/17
                 //float flipRotationDelta = playerController.getDegreesRotated();
@@ -174,23 +184,189 @@ public class MouseInput : MonoBehaviour
                 //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
                 if (!playerController.isGroundDash)
                 {
-                    if (isRecoiling || isRecentering)
+                    //if (isRecoiling || isRecentering)
+                    //{
+                    //    xRotation += recoilRotationDelta;
+                    //    transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+                    //    //transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, yRotation, 0f);
+                    //    //transform.parent.transform.localRotation = Quaternion.Euler(0f, yRotation, 0f);
+                    //    //transform.parent.transform.Rotate(transform.parent.transform.up * mouseX, Space.Self);
+                    //    playerBody.Rotate(Vector3.up * mouseX);
+                    //}
+
+                    //if (isRecoiling || isRecentering)
+                    //{
+                        //old
+                        //xRotation += recoilRotationDelta;
+                        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+                        ////transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, yRotation, 0f);
+                        ////transform.parent.transform.localRotation = Quaternion.Euler(0f, yRotation, 0f);
+                        ////transform.parent.transform.Rotate(transform.parent.transform.up * mouseX, Space.Self);
+                        //playerBody.Rotate(Vector3.up * mouseX);
+
+                        //new
+                        //playerBody.Rotate(-mouseY, 0f, 0f);
+                        ////transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                        ////transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+                        //playerBody.Rotate(Vector3.up * mouseX);
+                    //}
+                    //else
+                    //{
+                        //if (playerController.getIsRotating() == true)
+                        //{
+                        //    Vector3 worldFlipRotation = new Vector3(flipAxis.x, 0f, flipAxis.z).normalized;
+                        //    //transform.parent.transform.Rotate(worldFlipRotation * flipRotationDelta, Space.World);
+                        //    transform.parent.transform.Rotate(worldFlipRotation * Time.deltaTime * 540f, Space.World);
+                        //    Debug.Log(worldFlipRotation);
+
+                        //    transform.parent.transform.Rotate(0f, mouseX, 0f, Space.Self);
+
+                        //}
+                        //else
+                        //{
+                        //    transform.parent.transform.Rotate(-mouseY, 0f, 0f);
+                        //    //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                        //    //transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+                        //    playerBody.Rotate(Vector3.up * mouseX);
+                        //}
+                    if (playerController.getIsRotating() == true)
                     {
-                        xRotation += recoilRotationDelta;
-                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
-                        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, yRotation, 0f);
-                        //transform.parent.transform.localRotation = Quaternion.Euler(0f, yRotation, 0f);
-                        //transform.parent.transform.Rotate(transform.parent.transform.up * mouseX, Space.Self);
+                        updateRotation();
+
+                        Vector3 worldFlipRotation = new Vector3(flipAxis.x, 0f, flipAxis.z).normalized;
+                        //transform.parent.transform.Rotate(worldFlipRotation * flipRotationDelta, Space.World);
+
+                        playerBody.Rotate(worldFlipRotation * -newRotationDelta, Space.World);
+                        mouseDegreesRotated += newRotationDelta;
+
+                        //if (degreesRotated == 360f)
+                        //{
+                        //    playerController.setIsRotating(false);
+                        //    degreesRotated = 0;
+                                
+                        //}
+
+                        //playerBody.Rotate(worldFlipRotation * -flipRotationIncrement, Space.World);
+                        //mouseDegreesRotated += flipRotationIncrement;
+
+                        //playerBody.Rotate(worldFlipRotation * Time.deltaTime * 540f, Space.World);
+                        //mouseDegreesRotated += (worldFlipRotation * Time.deltaTime * 540f).magnitude;
+                        Debug.Log(mouseDegreesRotated);
+
+                        //4/25 changed - was just the first line below (no clamp)
+                        //playerBody.Rotate(0f, mouseX, 0f, Space.Self);
+
+                        playerBody.Rotate(0f, mouseX, 0f, Space.Self);
+
+                        //clamp vertical x-axis rotation
+                        //if (mouseY > 0f)
+                        //{
+                        //    mouseY = Mathf.Min(mouseY, (-90f - transform.parent.transform.localRotation.eulerAngles.x) * -1f);
+                        //}
+                        //else if (mouseY < 0f)
+                        //{
+                        //    mouseY = Mathf.Max(mouseY, (90f - transform.parent.transform.localRotation.eulerAngles.x) * -1f);
+                        //}
+                        //Debug.Log(xRotation);
+
+                        //START WORKING BLOCK
+                        //float oldXRotation = xRotation;
+                        //xRotation -= mouseY;
+                        //if (xRotation < -90f)
+                        //{
+                        //    mouseY = -90f - oldXRotation;
+                        //}
+                        //else if (xRotation > 90f)
+                        //{
+                        //    mouseY = 90f - oldXRotation;
+                        //}
+                        //xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+                        //Debug.Log(mouseY);
+
+                        //transform.parent.transform.Rotate(-mouseY, 0f, 0f, Space.Self);
+                        //END WORKING BLOCK
+
+                        //NEW BLOCK
+                        xRotation -= mouseY;
+                        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+
+
                     }
                     else
                     {
-                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+                        mouseDegreesRotated = 0f;
+
+                        //4/25 changed - was just the first line below (no clamp)
+                        //transform.parent.transform.Rotate(-mouseY, 0f, 0f);
+
+                        //Debug.Log(mouseY);
+
+                        //clamp vertical x-axis rotation
+                        //if (mouseY > 0f)
+                        //{
+                        //    //mouseY = Mathf.Min(mouseY, (-90f - transform.parent.transform.localRotation.eulerAngles.x) * -1f);
+                        //    mouseY = Mathf.Min(mouseY, (270f - transform.parent.transform.localRotation.eulerAngles.x) * -1f);
+                        //}
+                        //else if (mouseY < 0f)
+                        //{
+                        //    mouseY = Mathf.Max(mouseY, (90f - transform.parent.transform.localRotation.eulerAngles.x) * -1f);
+                        //}
+                        //Debug.Log(transform.parent.transform.localRotation.eulerAngles.x);
+                        //Debug.Log(xRotation);
+
+                        //START WORKING BLOCK
+                        //float oldXRotation = xRotation;
+                        //xRotation -= mouseY;
+                        //if (xRotation < -90f)
+                        //{
+                        //    mouseY = -90f - oldXRotation;
+                        //}
+                        //else if (xRotation > 90f)
+                        //{
+                        //    mouseY = 90f - oldXRotation;
+                        //}
+                        //xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+                        //Debug.Log(mouseY);
+
+                        //transform.parent.transform.Rotate(-mouseY, 0f, 0f, Space.Self);
+                        //END WORKING BLOCK
+
+                        //NEW BLOCK
+                        xRotation -= mouseY;
+                        xRotation = Mathf.Clamp(xRotation, -90f, 90f);
+                        transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+
+                        //playerBody.Rotate(-mouseY, 0f, 0f);
+                        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+
+                        playerBody.Rotate(Vector3.up * mouseX);
+
+                        //playerBody.Rotate(0f, mouseX, 0f, Space.Self);
+
+                    }
+                        //else
+                        //{
+                        //    playerBody.Rotate(-mouseY, 0f, 0f);
+                        //    //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                        //    //transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+                        //    playerBody.Rotate(Vector3.up * mouseX);
+                        //}
+                        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, 0f, 0f);
+                        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+                        //transform.parent.transform.Rotate(flipAxis * flipRotationDelta, Space.World);
+                        //Vector3 worldFlipRotation = new Vector3(flipAxis.x, 0f, flipAxis.z);
+                        //transform.parent.transform.Rotate(worldFlipRotation * flipRotationDelta, Space.World);
+                        //transform.parent.transform.Rotate(worldFlipRotation *Time.deltaTime*360f, Space.World);
+                        //Debug.Log(worldFlipRotation);
+                        //transform.parent.transform.Rotate(new Vector3(20f, 0f, 0f));
                         //transform.parent.transform.localRotation = Quaternion.Euler(xRotation - flipRotationDelta, yRotation, 0f);
                         //transform.parent.transform.localRotation = Quaternion.Euler(0f, yRotation, 0f);
                         //transform.parent.transform.Rotate(transform.parent.transform.up * mouseX, Space.Self);
-                    }
+                    //}
                     //transform.parent.transform.Rotate(xRotation, 0f, 0f);
-                    playerBody.Rotate(Vector3.up * mouseX);
+                    //playerBody.Rotate(Vector3.up * mouseX);
                     //playerBody.Rotate(0f, Vector3.Dot(transform.parent.transform.up, Vector3.up) * mouseX, 0f, Space.Self);
                     //transform.parent.transform.Rotate(Vector3.up * mouseX);
                 }
@@ -284,7 +460,7 @@ public class MouseInput : MonoBehaviour
         //old recoil logic
         //xRotation -= 2.5f;
         //xRotation = Mathf.Clamp(xRotation, -90f, 90f);
-        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        //transform.parent.transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f); 
     }
 
     public void UpdateRecenter()
@@ -305,6 +481,30 @@ public class MouseInput : MonoBehaviour
             isRecentering = false;
             recenterTimeElapsed = 0f;
             newRecoilRotation = 0f;
+        }
+    }
+
+    public void updateRotation()
+    {
+        float newRotation = Mathf.Clamp(540f * Time.deltaTime, 0f, 360f - degreesRotated);
+        //mainCamera.Rotate(-newRotation, 0f, 0f, Space.Self);
+        degreesRotated += newRotation;
+        newRotationDelta = newRotation;
+        //degreesRotated += 360f * Time.deltaTime;
+
+        if (degreesRotated == 360f)
+        {
+            //Debug.Log(degreesRotated);
+            //isRotating = false;
+            playerController.setIsRotating(false);
+            degreesRotated = 0f;
+            //Debug.Log("Player controller isrotating = false");
+            //Match player rotation with arms object rotation after flip is complete (otherwise, movement direciton, etc. will be wrong)
+            //transform.rotation = arms.rotation;
+
+            //new
+            //transform.rotation.rese
+            //transform.localRotation.z = 0;
         }
     }
 }

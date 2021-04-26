@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections;
 using UnityEngine;
+using FPSModes;
 
 namespace FPSControllerLPFP
 {
@@ -63,6 +64,8 @@ namespace FPSControllerLPFP
         bool isCollidingWithWall = false;
         bool isHoldingJump = false;
         bool isRotating = false;
+        bool rotateFinished = false;
+        private Vector3 worldRotationAxis;
         bool isSliding = false;
         bool isGliding = false;
         bool isDescending = false;
@@ -82,7 +85,8 @@ namespace FPSControllerLPFP
         private int airDashesAllowed = 2;//1;
         private float gpJumpStartTime;
         private float tripleJumpStartTime;
-        private float degreesRotated = 0;
+        private float degreesRotated = 0f;
+        private float newRotationDelta = 0f;
         private Vector3 groundNormal = Vector3.zero;
         private Vector3 wallNormal = Vector3.zero;
 
@@ -103,6 +107,10 @@ namespace FPSControllerLPFP
 
         [Tooltip("The gun camera"), SerializeField]
         private Camera gunCamera;
+
+        [Header("Gun Controller")]
+        [Tooltip("The gun controller"), SerializeField]
+        private HandgunScriptLPFP gunController;
 
         [Tooltip("The camera effects controller"), SerializeField]
         public CameraFXController cameraFXController;
@@ -143,6 +151,9 @@ namespace FPSControllerLPFP
 
         [Tooltip("The audio clip that is played when skidding"), SerializeField]
         private AudioClip skidSound;
+
+        [Tooltip("The audio clip that is played when flipping"), SerializeField]
+        private AudioClip flipSound;
 
         [Header("Movement Settings")]
         [Tooltip("How fast the player moves while walking and strafing."), SerializeField]
@@ -277,6 +288,14 @@ namespace FPSControllerLPFP
             //MoveCharacter();
             //_isGrounded = false;
         }
+        private void LateUpdate()
+        {
+            if (rotateFinished)
+            {
+                isRotating = false;
+                rotateFinished = false;
+            }
+        }
 
         /// Moves the camera to the character, processes jumping and plays sounds every frame.
         private void Update()
@@ -284,7 +303,7 @@ namespace FPSControllerLPFP
             //Lerp slide camera
             //LerpSlideCamera();
 
-            Debug.Log(isRotating);
+            //Debug.Log(isRotating);
 
             //rotation testing
             //mainCamera.Rotate(540f * Time.deltaTime, 0f, 0f, Space.Self);
@@ -305,15 +324,40 @@ namespace FPSControllerLPFP
 
             if (isRotating)
             {
-                float newRotation = Mathf.Clamp(540f * Time.deltaTime, 0f, 360f - degreesRotated);
-                //mainCamera.Rotate(-newRotation, 0f, 0f, Space.Self);
-                degreesRotated += newRotation;
+                //old
+                //float newRotation = Mathf.Clamp(540f * Time.deltaTime, 0f, 360f - degreesRotated);
+                ////mainCamera.Rotate(-newRotation, 0f, 0f, Space.Self);
+                //degreesRotated += newRotation;
 
-                if (degreesRotated == 360f)
-                {
-                    isRotating = false;
-                    degreesRotated = 0;
-                }
+                //if (degreesRotated == 360f)
+                //{
+                //    isRotating = false;
+                //    degreesRotated = 0;
+                //}
+
+                //new - 4/21
+                //float newRotation = Mathf.Clamp(540f * Time.deltaTime, 0f, 360f - degreesRotated);
+                ////mainCamera.Rotate(-newRotation, 0f, 0f, Space.Self);
+                //degreesRotated += newRotation;
+                //newRotationDelta = newRotation;
+                ////degreesRotated += 360f * Time.deltaTime;
+
+                //if (degreesRotated == 360f)
+                //{
+                //    //Debug.Log(degreesRotated);
+                //    rotateFinished = true;
+                //    //isRotating = false;
+                //    degreesRotated = 0;
+                //    //Debug.Log("Player controller isrotating = false");
+                //    //Match player rotation with arms object rotation after flip is complete (otherwise, movement direciton, etc. will be wrong)
+                //    //transform.rotation = arms.rotation;
+
+                //    //new
+                //    //transform.rotation.rese
+                //    //transform.localRotation.z = 0;
+                //}
+
+
             }
 
 
@@ -604,6 +648,7 @@ namespace FPSControllerLPFP
                         if (Input.GetKey(KeyCode.Mouse2))
                         {
                             isRotating = true;
+                            PlayFlipSound();
                         }
                     }
                     //else
@@ -923,6 +968,10 @@ namespace FPSControllerLPFP
                 if (Input.GetKey(KeyCode.Mouse2))
                 {
                     isRotating = true;
+                    PlayFlipSound();
+                    //set initial rotation direction - 4/21
+                    worldRotationAxis = transform.right;
+                    //gunController.setFireMode(FireMode.Flip);
                 }
             }
             
@@ -1327,6 +1376,16 @@ namespace FPSControllerLPFP
             //}
         }
 
+        private void PlayFlipSound()
+        {
+            _audioSource.clip = flipSound;
+            _audioSource.loop = false;
+            //if (!_audioSource.isPlaying)
+            //{
+            _audioSource.Play();
+            //}
+        }
+
         /// A helper for assistance with smoothing the camera rotation.
         private class SmoothRotation
         {
@@ -1540,6 +1599,7 @@ namespace FPSControllerLPFP
                             if (Input.GetKey(KeyCode.Mouse2))
                             {
                                 isRotating = true;
+                                PlayFlipSound();
                             }
 
                             //allow airdash post-wall jump
@@ -1625,6 +1685,30 @@ namespace FPSControllerLPFP
         public float getDegreesRotated()
         {
             return this.degreesRotated;
+        }
+
+        public float getNewRotationDelta()
+        {
+            return this.newRotationDelta;
+        }
+
+        public bool getIsRotating()
+        {
+            return this.isRotating;
+        }
+
+        public void setIsRotating(bool rotationState)
+        {
+            this.isRotating = rotationState;
+            if (_audioSource.clip = flipSound)
+            {
+                _audioSource.Stop();
+            }
+        }
+
+        public Vector3 getWorldRotationAxis()
+        {
+            return this.worldRotationAxis;
         }
     }
 
