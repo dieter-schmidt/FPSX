@@ -46,6 +46,7 @@ namespace FPSControllerLPFP
         public float gpSuperJumpInterval = 0.25f;
         public float tripleJumpInterval = 0.1f;
         public float superJumpMultiplier = 2f;
+        public float tripleJumpMultiplier = 2.6f;
 
         public Transform groundCheck;
         public float groundDistance = 0.3f;
@@ -56,6 +57,7 @@ namespace FPSControllerLPFP
         bool wasGrounded = false;
         bool groundPoundStart = false;
         bool isGroundPound = false;
+        bool groundPounded = false;
         bool isAirDashing = false;
         //makes sure sprint is released after jumping before air dash is available
         bool sprintReleased = false;
@@ -136,6 +138,9 @@ namespace FPSControllerLPFP
 
         [Tooltip("The audio clip that is played when jumping"), SerializeField]
         private AudioClip jumpSound;
+
+        [Tooltip("The audio clip that is played when triple jumping"), SerializeField]
+        private AudioClip tripleJumpSound;
 
         [Tooltip("The audio clip that is played when holding jump"), SerializeField]
         private AudioClip jumpHoldSound;
@@ -303,7 +308,7 @@ namespace FPSControllerLPFP
             //Lerp slide camera
             //LerpSlideCamera();
 
-            //Debug.Log(isRotating);
+            Debug.Log(_audioSource.clip);
 
             //rotation testing
             //mainCamera.Rotate(540f * Time.deltaTime, 0f, 0f, Space.Self);
@@ -650,35 +655,50 @@ namespace FPSControllerLPFP
                             isRotating = true;
                             PlayFlipSound();
                         }
-                    }
-                    //else
-                    //{
-                    //    //triple jump logic
-                    //    if (Time.time - tripleJumpStartTime <= tripleJumpInterval)
-                    //    {
-                    //        tripleJumpContacts++;
-                    //        if (tripleJumpContacts == 3)
-                    //        {
-                    //            velocity.y = Mathf.Sqrt(jumpHeight * 2 * superJumpMultiplier * -2f * gravity);
-                    //            launchVelocity = controller.velocity;
-                    //            tripleJumpContacts = 0;
-                    //        }
-                    //        else
-                    //        {
-                    //            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-                    //        }
-                    //    }
-                    //    else
-                    //    {
-                    //        //reset
-                    //        tripleJumpContacts = 0;
-                    //    }
-                    //}
 
-                    
+                        tripleJumpContacts = 0;
+                        groundPounded = false;
+                    }
+                    else if (!groundPounded)
+                    {
+                        
+
+                        //triple jump logic
+                        if (Time.time - tripleJumpStartTime <= tripleJumpInterval)
+                        {
+                            tripleJumpContacts++;
+                            if (tripleJumpContacts == 3)
+                            {
+                                velocity.y = Mathf.Sqrt(jumpHeight *  tripleJumpMultiplier * -2f * gravity);
+                                //launchVelocity = controller.velocity;
+                                launchVelocity = playerVel;
+                                tripleJumpContacts = 0;
+                                PlayTripleJumpSound(1f);
+                            }
+                            else
+                            {
+                                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+
+                                //4/27
+                                tripleJumpStartTime = Time.time;
+                                PlayJumpSound(1f);
+                            }
+                            //this will maintain standard airdash momentum during/after triple jump sequence
+                            jumped = true;
+                        }
+                        else
+                        {
+                            //reset
+                            tripleJumpContacts = 0;
+                        }
+                    }
+
+
                 }
                 else
                 {
+                    groundPounded = false;
+                    tripleJumpContacts = 0;
                     //retrieve velocity on last frame before jump
                     //launchVelocity = move * speed;
                     //launchVelocity = playerVel;
@@ -688,10 +708,10 @@ namespace FPSControllerLPFP
             else
             {
                 ////triple jump logic
-                //if (Input.GetButtonDown("Jump"))
-                //{
-                //    tripleJumpStartTime = Time.time;
-                //}
+                if (Input.GetButtonDown("Jump"))
+                {
+                    tripleJumpStartTime = Time.time;
+                }
 
                 if (Input.GetAxis("Fire3") == 0)
                 {
@@ -945,18 +965,19 @@ namespace FPSControllerLPFP
             //    velocity += launchVelocity;
             //}
 
-            if (Input.GetButtonDown("Jump") && !jumped)//isGrounded)
+            //added triple jump check for dkc jump (prevents airjumping during triple jump string
+            if (Input.GetButtonDown("Jump") && !jumped && tripleJumpContacts == 0)//isGrounded)
             {
                 ////triple jump counter
-                //if (tripleJumpContacts == 0)
-                //{
-                //    tripleJumpContacts++;
-                //}
+                if (tripleJumpContacts == 0)
+                {
+                    tripleJumpContacts++;
+                }
 
                 //DKC roll-midair jump logic
                 jumped = true;
 
-                PlayJumpSound();
+                PlayJumpSound(1f);
                 //v = -2gh
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
@@ -1047,6 +1068,7 @@ namespace FPSControllerLPFP
             if (!isGrounded)
             {
                 isGroundPound = true;
+                groundPounded = true;
             }
             
 
@@ -1275,6 +1297,7 @@ namespace FPSControllerLPFP
 
         private void PlayGPStartSound()
         {
+            _audioSource.pitch = 1f;
             //Debug.Log("GP START SOUND");
             _audioSource.clip = gpSound;
             //if (!_audioSource.isPlaying)
@@ -1285,6 +1308,7 @@ namespace FPSControllerLPFP
 
         private void PlayGPLandSound()
         {
+            _audioSource.pitch = 1f;
             _audioSource.clip = gpLandSound;
             _audioSource.loop = false;
             //if (!_audioSource.isPlaying)
@@ -1295,6 +1319,7 @@ namespace FPSControllerLPFP
 
         private void PlayGroundDashSound()
         {
+            _audioSource.pitch = 1f;
             _audioSource.clip = groundDashSound;
             _audioSource.loop = true;
             //if (!_audioSource.isPlaying)
@@ -1305,6 +1330,7 @@ namespace FPSControllerLPFP
 
         private void PlayAirDashSound()
         {
+            _audioSource.pitch = 1f;
             _audioSource.clip = airDashSound;
             _audioSource.loop = false;
             //if (!_audioSource.isPlaying)
@@ -1315,6 +1341,7 @@ namespace FPSControllerLPFP
 
         private void PlayGlideSound()
         {
+            _audioSource.pitch = 1f;
             _audioSource.clip = glideSound;
             _audioSource.loop = false;
             //if (!_audioSource.isPlaying)
@@ -1325,6 +1352,7 @@ namespace FPSControllerLPFP
 
         private void PlayLandSound()
         {
+            _audioSource.pitch = 1f;
             _audioSource.clip = landSound;
             _audioSource.loop = false;
             //if (!_audioSource.isPlaying)
@@ -1333,9 +1361,21 @@ namespace FPSControllerLPFP
             //}
         }
 
-        private void PlayJumpSound()
+        private void PlayJumpSound(float pitch)
         {
+            _audioSource.pitch = pitch;
             _audioSource.clip = jumpSound;
+            _audioSource.loop = false;
+            //if (!_audioSource.isPlaying)
+            //{
+            _audioSource.Play();
+            //}
+        }
+
+        private void PlayTripleJumpSound(float pitch)
+        {
+            _audioSource.pitch = pitch;
+            _audioSource.clip = tripleJumpSound;
             _audioSource.loop = false;
             //if (!_audioSource.isPlaying)
             //{
@@ -1345,6 +1385,7 @@ namespace FPSControllerLPFP
 
         private void PlayJumpHoldSound()
         {
+            //_audioSource.pitch = 1f;
             _audioSource.clip = jumpHoldSound;
             _audioSource.loop = false;
             _audioSource.volume = 1f;// 0.05f;
@@ -1356,6 +1397,7 @@ namespace FPSControllerLPFP
 
         private void PlaySlideSound()
         {
+            _audioSource.pitch = 1f;
             //Debug.Log("GP START SOUND");
             _audioSource.clip = slideSound;
             _audioSource.loop = false;
@@ -1367,6 +1409,7 @@ namespace FPSControllerLPFP
 
         private void PlaySkidSound()
         {
+            _audioSource.pitch = 1f;
             Debug.Log("SKID SOUND");
             _audioSource.clip = skidSound;
             _audioSource.loop = false;
@@ -1378,6 +1421,7 @@ namespace FPSControllerLPFP
 
         private void PlayFlipSound()
         {
+            _audioSource.pitch = 1f;
             _audioSource.clip = flipSound;
             _audioSource.loop = false;
             //if (!_audioSource.isPlaying)
@@ -1600,12 +1644,16 @@ namespace FPSControllerLPFP
                             {
                                 isRotating = true;
                                 PlayFlipSound();
+                                //set initial rotation direction - 4/21
+                                worldRotationAxis = transform.right;
                             }
 
                             //allow airdash post-wall jump
                             airDashesUsed = 0;
 
-                            PlayJumpSound();
+                            tripleJumpContacts = 0;
+
+                            PlayJumpSound(1f);
                             //Debug.Log("WALLJUMPED");
                             wallJumped = true;
                             //wallCollisionStarted = false;

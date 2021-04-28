@@ -4219,6 +4219,7 @@ MonoBehaviour:
   gpSuperJumpInterval: 0.05
   tripleJumpInterval: 0.1
   superJumpMultiplier: 2
+  tripleJumpMultiplier: 2.6
   groundCheck: {fileID: 437709271}
   groundDistance: 0.3
   groundMask:
@@ -4240,6 +4241,7 @@ MonoBehaviour:
   gpLandSound: {fileID: 8300000, guid: 04767289c37effc429831155cf0fc21d, type: 3}
   airDashSound: {fileID: 8300000, guid: 281becc00fb73a94a8e96f9bf0aea5ca, type: 3}
   jumpSound: {fileID: 8300000, guid: b90e53dbdb3a65d49838b8b8dd131477, type: 3}
+  tripleJumpSound: {fileID: 0}
   jumpHoldSound: {fileID: 8300000, guid: 56d46445a03446d438bca098e3f1d258, type: 3}
   slideSound: {fileID: 8300000, guid: cc3c130e8eb4b254ca198922b8649215, type: 3}
   landSound: {fileID: 8300000, guid: b3e9cdac26b78934197456d8199e30bc, type: 3}
@@ -44962,6 +44964,10 @@ PrefabInstance:
       propertyPath: shortJumpHeight
       value: 4
       objectReference: {fileID: 0}
+    - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
+      propertyPath: tripleJumpSound
+      value: 
+      objectReference: {fileID: 8300000, guid: f7a888097c1098c44b3c2378768c9cac, type: 3}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: postAirDashSpeed
       value: 10
