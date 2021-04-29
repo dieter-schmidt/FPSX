@@ -25,8 +25,6 @@ namespace FPSModes
     }
 }
 
-
-
 public class HandgunScriptLPFP : MonoBehaviour {
 
 	//Animator component attached to weapon
@@ -219,14 +217,10 @@ public class HandgunScriptLPFP : MonoBehaviour {
 
 	private void Awake () 
 	{
-        //assign damage numbers
-        //numberPrefabs.Add(baseCanvas.GetComponentInChildren<DamageNumber>());
-
         //Set the animator component
         anim = GetComponent<Animator>();
 		//Set current ammo to total ammo value
 		currentAmmo = ammo;
-
 		muzzleflashLight.enabled = false;
 	}
 
@@ -269,7 +263,6 @@ public class HandgunScriptLPFP : MonoBehaviour {
 	
 	private void Update () {
 
-        //Debug.Log(canvasFixed.activeInHierarchy);
 
         //set audio pitch to match timescale
         mainAudioSource.pitch = Time.timeScale;
@@ -320,8 +313,6 @@ public class HandgunScriptLPFP : MonoBehaviour {
 		if (Input.GetKeyDown (KeyCode.Alpha1)) 
 		{
 			Time.timeScale = 1.0f;
-            //mainAudioSource.pitch = Time.timeScale;
-            //shootAudioSource.pitch = Time.timeScale;
             timescaleText.text = "1.0";
 		}
 
@@ -331,31 +322,13 @@ public class HandgunScriptLPFP : MonoBehaviour {
             switch (fireMode)
             {
                 case FireMode.Fixed:
-                    //canvasContainer.position = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width/2f, Screen.height/2f, (mainCamera.nearClipPlane + 0.01f)));
-                    //canvasFixed.GetComponent<Canvas>().enabled = false;
-                    //canvasFree.GetComponent<Canvas>().enabled = true;
-                    //canvasFixed.SetActive(false);
-                    //canvasFree.SetActive(true);
-                    //Cursor.lockState = CursorLockMode.Locked;
                     fireMode = FireMode.Free;
                     break;
                 case FireMode.Free:
-                    //canvasFixed.GetComponent<Canvas>().enabled = true;
-                    //canvasFree.GetComponent<Canvas>().enabled = false;
-                    //canvasFixed.SetActive(true);
-                    //canvasFree.SetActive(false);
-                    //Cursor.lockState = CursorLockMode.Confined;
                     fireMode = FireMode.Fixed;
                     break;
             }
         }
-
-        //Change timescale to 50% when 2 key is pressed
-        //if (Input.GetKeyDown (KeyCode.Alpha2)) 
-        //{
-        //	Time.timeScale = 0.5f;
-        //	timescaleText.text = "0.5";
-        //}
 
         //Time change logic
         if (Input.GetButtonDown("Slomo"))
@@ -372,12 +345,6 @@ public class HandgunScriptLPFP : MonoBehaviour {
                 timeController.IncreaseMotion(timeState, TimeState.Normal);
                 timeState = TimeState.Normal;
             }
-            //Time.timeScale = 0.4f;
-
-            //mainAudioSource.pitch = Time.timeScale;
-            //shootAudioSource.pitch = Time.timeScale;
-            //timescaleText.text = "0.5";
-            //}
         }
         else if (Input.GetButtonDown("SpeedUp"))
         {
@@ -393,15 +360,7 @@ public class HandgunScriptLPFP : MonoBehaviour {
                 timeController.DecreaseMotion(TimeState.Normal, timeState);
                 timeState = TimeState.Normal;
             }
-            
-
-            //mainAudioSource.pitch = Time.timeScale;
-            //shootAudioSource.pitch = Time.timeScale;
-            //timescaleText.text = "1";
         }
-
-            //timescaleText.text = timeController.
-        
 
         //Change timescale to 25% when 3 key is pressed
         if (Input.GetKeyDown (KeyCode.Alpha3)) 

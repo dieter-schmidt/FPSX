@@ -22,9 +22,6 @@ public class TimeController : MonoBehaviour
     public float fxStopTransitionInterval = 1f;
     public CameraFXController cameraFXController;
 
-    //TODO - state variables for start transition and end transition to apply gradual changes
-    //private bool isStarting = false;
-    //private bool isStopping = false;
     private bool isDecreasing = false;
     private bool isIncreasing = false;
     private bool isStable = true;
@@ -39,36 +36,27 @@ public class TimeController : MonoBehaviour
         isStable = !isDecreasing && !isIncreasing;
         //unscaled - not effected by timescale like regular deltatime is
 
-        //Debug.Log(lowFactor + ", " + highFactor);
-
         if (isDecreasing)
         {
-            //Camera effects change with timescale
-            //float timeChange = (1f / startTransitionInterval) * Time.unscaledDeltaTime;
-            //cameraFXController.updateFX("timescale", (1f / startTransitionInterval) * Time.unscaledDeltaTime, 0f, 0f);
-
             Time.timeScale -= (1f / startTransitionInterval) * Time.unscaledDeltaTime;
-            //float currentScale = Mathf.Clamp(Time.timeScale, slowdownFactor, 1f);
             float currentScale = Mathf.Clamp(Time.timeScale, lowFactor, highFactor);
+
             //if starting transition is complete, reset to normal time
             if (currentScale == lowFactor)
             {
                 isDecreasing = false;
-                //Time.timeScale = slowdownFactor;
                 Time.fixedDeltaTime = Time.timeScale * 0.02f;
             }
-            //Time.timeScale = Mathf.Clamp(Time.timeScale, slowdownFactor, 1f);
         }
         else if (isIncreasing)
         {
             Time.timeScale += (1f / stopTransitionInterval) * Time.unscaledDeltaTime;
-            //float currentScale = Mathf.Clamp(Time.timeScale, slowdownFactor, 1f);
             float currentScale = Mathf.Clamp(Time.timeScale, lowFactor, highFactor);
+
             //if stopping transition is complete, reset to normal time
             if (currentScale == highFactor)
             {
                 isIncreasing = false;
-                //Time.timeScale = 1f;
                 Time.fixedDeltaTime = Time.timeScale * 0.02f;
             }
         }
@@ -77,22 +65,6 @@ public class TimeController : MonoBehaviour
 
     public void DecreaseMotion(TimeState startTime, TimeState endTime)
     {
-        //Time.timeScale = slowdownFactor;
-
-        //default is 50fps
-        //Time.fixedDeltaTime = Time.timeScale * 0.02f;
-
-        //if (timeState == TimeState.Normal)
-        //{
-        //    highFactor = normalFactor;
-        //    lowFactor = slowdownFactor;
-        //}
-        //else if (timeState == TimeState.Fast)
-        //{
-        //    highFactor = speedupFactor;
-        //    lowFactor = slowdownFactor;
-        //}
-
         if (startTime == TimeState.Normal)
         {
             lowFactor = normalFactor;
@@ -111,29 +83,12 @@ public class TimeController : MonoBehaviour
             }
         }
 
-
         //apply transition state
         isDecreasing = true;
     }
 
     public void IncreaseMotion(TimeState startTime, TimeState endTime)
     {
-        //Time.timeScale = 1f;
-
-        //default is 50fps
-        //Time.fixedDeltaTime = Time.timeScale * 0.02f;
-
-        //if (timeState == TimeState.Normal)
-        //{
-        //    lowFactor = normalFactor;
-        //    highFactor = speedupFactor;
-        //}
-        //else if (timeState == TimeState.Slow)
-        //{
-        //    lowFactor = slowdownFactor;
-        //    highFactor = speedupFactor;
-        //}
-
         if (startTime == TimeState.Normal)
         {
             lowFactor = normalFactor;

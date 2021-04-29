@@ -44842,7 +44842,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: speed
-      value: 16
+      value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: gpSound
@@ -44850,7 +44850,7 @@ PrefabInstance:
       objectReference: {fileID: 8300000, guid: 28fb7649030cef54b83f1081a28d32d3, type: 3}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: gravity
-      value: -60
+      value: -80
       objectReference: {fileID: 0}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: airSpeed
@@ -44858,7 +44858,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: runSpeed
-      value: 24
+      value: 36
       objectReference: {fileID: 0}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: flipSound
@@ -44950,7 +44950,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: normalGravity
-      value: -60
+      value: -80
       objectReference: {fileID: 0}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: groundDashSound
@@ -44958,7 +44958,7 @@ PrefabInstance:
       objectReference: {fileID: 8300000, guid: 4b4e3a32a3c468449b75fa295cb19000, type: 3}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: groundDashSpeed
-      value: 40
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: shortJumpHeight
@@ -45002,7 +45002,11 @@ PrefabInstance:
       objectReference: {fileID: 1400720849}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: superJumpMultiplier
-      value: 2
+      value: 3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
+      propertyPath: tripleJumpMultiplier
+      value: 4.5
       objectReference: {fileID: 0}
     - target: {fileID: 114352007083497230, guid: c24fed9fa91f7634fbc8e5e12405008e, type: 3}
       propertyPath: groundPoundMultiplier
