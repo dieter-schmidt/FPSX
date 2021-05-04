@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections;
 using UnityEngine;
 using FPSModes;
+using System.Collections.Generic;
 
 namespace FPSControllerLPFP
 {
@@ -31,6 +32,7 @@ namespace FPSControllerLPFP
         public float descentSpeed = 20f;
         public float glideDeltaVel = 0f;
         public float maxGlideSpeed = 50f;
+        public float grindSpeed = 30f;
         public float groundPoundMultiplier = 5f;
         public float wallSlideGravity;
         public float wallSlideGravMultiplier = 0.2f;
@@ -72,6 +74,7 @@ namespace FPSControllerLPFP
         bool isSliding = false;
         bool isGliding = false;
         bool isDescending = false;
+        bool isGrinding = false;
         public bool isGroundDash = false;
         public bool isSkidding = false;
         bool jumped = false;
@@ -92,6 +95,10 @@ namespace FPSControllerLPFP
         private float newRotationDelta = 0f;
         private Vector3 groundNormal = Vector3.zero;
         private Vector3 wallNormal = Vector3.zero;
+
+        private GameObject currentRail;
+        private List<Transform> railPoints = new List<Transform>();
+        private int railPointIndex;
 
         private int tripleJumpContacts = 0;
 
@@ -160,6 +167,12 @@ namespace FPSControllerLPFP
 
         [Tooltip("The audio clip that is played when flipping"), SerializeField]
         private AudioClip flipSound;
+
+        [Tooltip("The audio clip that is played when grinding"), SerializeField]
+        private AudioClip grindSound;
+
+        [Tooltip("The audio clip that is played when jumping from a grind"), SerializeField]
+        private AudioClip grindJumpSound;
 
         [Header("Movement Settings")]
         [Tooltip("How fast the player moves while walking and strafing."), SerializeField]
@@ -244,7 +257,7 @@ namespace FPSControllerLPFP
             //Lerp slide camera
             //LerpSlideCamera();
 
-            Debug.Log(_audioSource.clip);
+            Debug.Log(playerVel.magnitude);
 
             //wallTriggered = false;
             moved = controller.transform.position - lastPos;
@@ -267,7 +280,28 @@ namespace FPSControllerLPFP
             //check previous grounded state from last call
             wasGrounded = isGrounded;
             //creates sphere with specified radius, and check if it collides with ground
-            isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+            //added grinding check - 5/2
+            if (!isGrinding)
+            {
+                isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+            }
+            else
+            {
+                //grind logic
+
+                Vector3 grindMove;
+                
+                if (railPointIndex == 0)
+                {
+                    grindMove = (railPoints.ElementAt<Transform>(1).position - controller.transform.position).normalized * grindSpeed;
+                }
+                else
+                {
+                    grindMove = (railPoints.ElementAt<Transform>(0).position - controller.transform.position).normalized * grindSpeed;
+                }
+                launchVelocity = playerVel;
+                controller.Move(grindMove * Time.deltaTime);
+            }
 
             if (isGrounded && velocity.y < 0)
             {
@@ -279,10 +313,11 @@ namespace FPSControllerLPFP
 
             Vector3 move = transform.right * x + transform.forward * z;
 
+            Vector3 footPosition = new Vector3(transform.position.x, transform.position.y - ((controller.height / 2) - controller.skinWidth), transform.position.z);
             //TODO - add code to check for ground normal and project onto plane
             if (isGrounded)
             {
-                Vector3 footPosition = new Vector3(transform.position.x, transform.position.y - ((controller.height / 2) - controller.skinWidth), transform.position.z);
+                //Vector3 footPosition = new Vector3(transform.position.x, transform.position.y - ((controller.height / 2) - controller.skinWidth), transform.position.z);
                 //check when grounded and slightly leaving the ground (running down a slope for example)
                 RaycastHit hit;
                 if (Physics.Raycast(footPosition, -transform.up, out hit, 0.2f))// 5f))
@@ -319,6 +354,57 @@ namespace FPSControllerLPFP
                 {
 
                 }
+            }
+            //check for grindrail - 5/2
+            else if (!isGrinding && Input.GetKeyDown(KeyCode.V))
+            {
+                RaycastHit hit;
+                if (Physics.Raycast(footPosition, -transform.up, out hit, 10f))
+                {
+                    if (hit.transform.gameObject.tag == "Grindable")
+                    {
+                        currentRail = GameObject.Find("Waypoints");
+                        railPoints.Clear();
+                        //transform.position = GameObject.Find("wp2").transform.position;
+
+                        float distanceToWaypoint = 100f;
+                        Transform startingWayPoint = GameObject.Find("Waypoints").transform.GetChild(0);
+
+                        foreach (Transform wayPoint in GameObject.Find("Waypoints").transform)
+                        {
+                            railPoints.Add(wayPoint);
+
+                            //find closest waypoint
+                            float newDistance = Vector3.Distance(transform.position, wayPoint.position);
+                            if (newDistance < distanceToWaypoint && transform.position.y > wayPoint.position.y)
+                            {
+                                distanceToWaypoint = newDistance;
+                                startingWayPoint = wayPoint;
+                                railPointIndex = railPoints.IndexOf(startingWayPoint);
+                            }
+                        }
+
+                        counter++;
+                        Debug.Log("GRIND HIT " + counter);
+
+                        //transform.position = startingWayPoint.position;
+                        controller.enabled = false;
+                        controller.transform.position = startingWayPoint.position;
+                        controller.enabled = true;
+                        isGrinding = true;
+                        //GameObject.Find("SparksEffect").SetActive(true);
+                        PlayGrindSound();
+                        tripleJumpContacts = 0;
+                        isGrounded = false;
+                        jumped = false;
+                        launchVelocity = Vector3.zero;
+                    }
+                    else
+                    {
+                        //Debug.Log("NO GRIND");
+                    }
+                }
+                //Debug.Log(transform.position);
             }
 
             PlayFootstepSounds(x,z);
@@ -562,6 +648,8 @@ namespace FPSControllerLPFP
                         if (!isAirDashing && airDashesUsed < airDashesAllowed && sprintReleased && !isGroundPound && !groundPoundStart && airDashReleased)
                         {
                             airDashReleased = false;
+                            isGrinding = false;
+                            //GameObject.Find("SparksEffect").SetActive(false);
                             StartCoroutine(AirDashCoroutine());
                         }
                     }
@@ -576,7 +664,7 @@ namespace FPSControllerLPFP
                     }
 
                     //Ground Pound
-                    if (Input.GetKeyDown(KeyCode.Q))
+                    if (Input.GetKeyDown(KeyCode.Q) && !isGrinding)
                     {
                         StartCoroutine(GroundPoundCoroutine());
                     }
@@ -593,7 +681,7 @@ namespace FPSControllerLPFP
 
                     //Only allow air control for sideways and backwards movement post jump
                     //TODO - add forward air control if launchvelocity is less than airspeed
-                    if (!groundPoundStart && !isGroundPound && !isAirDashing && !isGliding)// && !isCollidingWithWall)
+                    if (!groundPoundStart && !isGroundPound && !isAirDashing && !isGliding && !isGrinding)// && !isCollidingWithWall)
                     {
                         velocity = new Vector3(launchVelocity.x, velocity.y, launchVelocity.z);
 
@@ -642,6 +730,20 @@ namespace FPSControllerLPFP
             //added triple jump check for dkc jump (prevents airjumping during triple jump string)
             if (Input.GetButtonDown("Jump") && !jumped && tripleJumpContacts == 0)//isGrounded)
             {
+                Debug.Log("JUMP TEST");
+
+                //change grinding state
+                if (isGrinding)
+                {
+                    PlayGrindJumpSound();
+                    isGrinding = false;
+                    //GameObject.Find("SparksEffect").SetActive(false);
+                }
+                else
+                {
+                    PlayJumpSound(1f);
+                }
+
                 ////triple jump counter
                 if (tripleJumpContacts == 0)
                 {
@@ -651,7 +753,7 @@ namespace FPSControllerLPFP
                 //DKC roll-midair jump logic
                 jumped = true;
 
-                PlayJumpSound(1f);
+                //PlayJumpSound(1f);
                 //v = -2gh
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
 
@@ -671,7 +773,7 @@ namespace FPSControllerLPFP
                 velocity.y = Mathf.Sqrt(shortJumpHeight * -2f * gravity);
             }
 
-            if (!groundPoundStart && !isGroundPound &&!isAirDashing && !wallCollisionStarted && !isGliding)
+            if (!groundPoundStart && !isGroundPound &&!isAirDashing && !wallCollisionStarted && !isGliding && !isGrinding)
             {
                 velocity.y += gravity * Time.deltaTime;
                 controller.Move(velocity * Time.deltaTime);
@@ -866,6 +968,22 @@ namespace FPSControllerLPFP
         {
             _audioSource.pitch = 1f;
             _audioSource.clip = slideSound;
+            _audioSource.loop = false;
+            _audioSource.Play();
+        }
+
+        private void PlayGrindSound()
+        {
+            _audioSource.pitch = 1f;
+            _audioSource.clip = grindSound;
+            _audioSource.loop = false;
+            _audioSource.Play();
+        }
+
+        private void PlayGrindJumpSound()
+        {
+            _audioSource.pitch = 1f;
+            _audioSource.clip = grindJumpSound;
             _audioSource.loop = false;
             _audioSource.Play();
         }
