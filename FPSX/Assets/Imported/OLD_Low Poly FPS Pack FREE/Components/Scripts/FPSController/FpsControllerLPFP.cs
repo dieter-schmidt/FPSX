@@ -74,7 +74,7 @@ namespace FPSControllerLPFP
         bool isSliding = false;
         bool isGliding = false;
         bool isDescending = false;
-        bool isGrinding = false;
+        public bool isGrinding = false;
         public bool isGroundDash = false;
         public bool isSkidding = false;
         bool jumped = false;
@@ -257,7 +257,7 @@ namespace FPSControllerLPFP
             //Lerp slide camera
             //LerpSlideCamera();
 
-            Debug.Log(playerVel.magnitude);
+            Debug.Log(playerVel);
 
             //wallTriggered = false;
             moved = controller.transform.position - lastPos;
@@ -290,17 +290,66 @@ namespace FPSControllerLPFP
                 //grind logic
 
                 Vector3 grindMove;
-                
-                if (railPointIndex == 0)
+
+                //old logic - only handles two waypoints
+                //if (railPointIndex == 0)
+                //{
+                //    grindMove = (railPoints.ElementAt<Transform>(1).position - controller.transform.position).normalized * grindSpeed;
+                //}
+                //else
+                //{
+                //    grindMove = (railPoints.ElementAt<Transform>(0).position - controller.transform.position).normalized * grindSpeed;
+                //}
+
+                //new logic - handles many waypoints - 5/26
+                //if (playerVel.z > 0f)
+                if (transform.forward.z > 0f)
                 {
-                    grindMove = (railPoints.ElementAt<Transform>(1).position - controller.transform.position).normalized * grindSpeed;
+                    Debug.Log("POSITIVE Z");
+                    if (railPointIndex > 0)
+                    {
+                        grindMove = (railPoints.ElementAt<Transform>(railPointIndex - 1).position - controller.transform.position).normalized * grindSpeed;
+
+                        // if player moves passes new waypoint, increment index
+                        if (transform.position.z + grindMove.z * Time.deltaTime >= railPoints.ElementAt<Transform>(railPointIndex - 1).position.z)
+                        {
+                            railPointIndex--;
+                        }
+                    }
+                    else
+                    {
+                        grindMove = Vector3.zero;
+                    }
+                }
+                //else if (playerVel.z < 0f)
+                else if (transform.forward.z < 0f)
+                {
+                    Debug.Log("NEGATIVE Z");
+                    Debug.Log("RPCOUNT = " + railPoints.Count);
+                    if (railPointIndex < railPoints.Count - 1)
+                    {
+                        grindMove = (railPoints.ElementAt<Transform>(railPointIndex + 1).position - controller.transform.position).normalized * grindSpeed;
+
+                        // if player moves passes new waypoint, increment index
+                        if (transform.position.z + grindMove.z * Time.deltaTime <= railPoints.ElementAt<Transform>(railPointIndex + 1).position.z && railPointIndex < railPoints.Count - 1)
+                        {
+                            railPointIndex++;
+                        }
+                    }
+                    else
+                    {
+                        grindMove = Vector3.zero;
+                    }
                 }
                 else
                 {
-                    grindMove = (railPoints.ElementAt<Transform>(0).position - controller.transform.position).normalized * grindSpeed;
+                    grindMove = Vector3.zero;
                 }
+
                 launchVelocity = playerVel;
                 controller.Move(grindMove * Time.deltaTime);
+
+                Debug.Log(railPointIndex);
             }
 
             if (isGrounded && velocity.y < 0)
@@ -358,53 +407,53 @@ namespace FPSControllerLPFP
             //check for grindrail - 5/2
             else if (!isGrinding && Input.GetKeyDown(KeyCode.V))
             {
-                RaycastHit hit;
-                if (Physics.Raycast(footPosition, -transform.up, out hit, 10f))
-                {
-                    if (hit.transform.gameObject.tag == "Grindable")
-                    {
-                        currentRail = GameObject.Find("Waypoints");
-                        railPoints.Clear();
-                        //transform.position = GameObject.Find("wp2").transform.position;
+                //RaycastHit hit;
+                //if (Physics.Raycast(footPosition, -transform.up, out hit, 10f))
+                //{
+                //    if (hit.transform.gameObject.tag == "Grindable")
+                //    {
+                //        currentRail = GameObject.Find("Waypoints");
+                //        railPoints.Clear();
+                //        //transform.position = GameObject.Find("wp2").transform.position;
 
-                        float distanceToWaypoint = 100f;
-                        Transform startingWayPoint = GameObject.Find("Waypoints").transform.GetChild(0);
+                //        float distanceToWaypoint = 100f;
+                //        Transform startingWayPoint = GameObject.Find("Waypoints").transform.GetChild(0);
 
-                        foreach (Transform wayPoint in GameObject.Find("Waypoints").transform)
-                        {
-                            railPoints.Add(wayPoint);
+                //        foreach (Transform wayPoint in GameObject.Find("Waypoints").transform)
+                //        {
+                //            railPoints.Add(wayPoint);
 
-                            //find closest waypoint
-                            float newDistance = Vector3.Distance(transform.position, wayPoint.position);
-                            if (newDistance < distanceToWaypoint && transform.position.y > wayPoint.position.y)
-                            {
-                                distanceToWaypoint = newDistance;
-                                startingWayPoint = wayPoint;
-                                railPointIndex = railPoints.IndexOf(startingWayPoint);
-                            }
-                        }
+                //            //find closest waypoint
+                //            float newDistance = Vector3.Distance(transform.position, wayPoint.position);
+                //            if (newDistance < distanceToWaypoint && transform.position.y > wayPoint.position.y)
+                //            {
+                //                distanceToWaypoint = newDistance;
+                //                startingWayPoint = wayPoint;
+                //                railPointIndex = railPoints.IndexOf(startingWayPoint);
+                //            }
+                //        }
 
-                        counter++;
-                        Debug.Log("GRIND HIT " + counter);
+                //        counter++;
+                //        Debug.Log("GRIND HIT " + counter);
 
-                        //transform.position = startingWayPoint.position;
-                        controller.enabled = false;
-                        controller.transform.position = startingWayPoint.position;
-                        controller.enabled = true;
-                        isGrinding = true;
-                        //GameObject.Find("SparksEffect").SetActive(true);
-                        PlayGrindSound();
-                        tripleJumpContacts = 0;
-                        isGrounded = false;
-                        jumped = false;
-                        launchVelocity = Vector3.zero;
-                    }
-                    else
-                    {
-                        //Debug.Log("NO GRIND");
-                    }
-                }
-                //Debug.Log(transform.position);
+                //        //transform.position = startingWayPoint.position;
+                //        controller.enabled = false;
+                //        controller.transform.position = startingWayPoint.position;
+                //        controller.enabled = true;
+                //        isGrinding = true;
+                //        //GameObject.Find("SparksEffect").SetActive(true);
+                //        PlayGrindSound();
+                //        tripleJumpContacts = 0;
+                //        isGrounded = false;
+                //        jumped = false;
+                //        launchVelocity = Vector3.zero;
+                //    }
+                //    else
+                //    {
+                //        //Debug.Log("NO GRIND");
+                //    }
+                //}
+                ////Debug.Log(transform.position);
             }
 
             PlayFootstepSounds(x,z);
@@ -1130,6 +1179,49 @@ namespace FPSControllerLPFP
                 mainCamera.transform.localPosition = new Vector3(0f, Mathf.Lerp(-controller.height / 2.5f, 0f, timeElapsed/slideLerpDuration), 0f);
                 timeElapsed += Time.deltaTime;
             }
+        }
+
+        //initiate grind if rail detects new trigger collision
+        public void initiateGrind(GameObject grindRail)
+        {
+            //updated to allow multiple objects with "Waypoints" children
+            currentRail = grindRail.transform.Find("Waypoints").gameObject;
+            Debug.Log(currentRail.name);
+            railPoints.Clear();
+            //transform.position = GameObject.Find("wp2").transform.position;
+
+            float distanceToWaypoint = 100f;
+            Transform startingWayPoint = grindRail.transform.Find("Waypoints").GetChild(0);// GameObject.Find("Waypoints").transform.GetChild(0);
+
+            foreach (Transform wayPoint in grindRail.transform.Find("Waypoints"))//GameObject.Find("Waypoints").transform)
+            {
+                railPoints.Add(wayPoint);
+
+                //find closest waypoint
+                float newDistance = Vector3.Distance(transform.position, wayPoint.position);
+                if (newDistance < distanceToWaypoint)// && transform.position.y > wayPoint.position.y)
+                {
+                    distanceToWaypoint = newDistance;
+                    startingWayPoint = wayPoint;
+                    railPointIndex = railPoints.IndexOf(startingWayPoint);
+                }
+            }
+
+            counter++;
+            //Debug.Log("GRIND HIT " + counter);
+            Debug.Log("rail index: "+railPointIndex);
+
+            //transform.position = startingWayPoint.position;
+            controller.enabled = false;
+            controller.transform.position = startingWayPoint.position;
+            controller.enabled = true;
+            isGrinding = true;
+            //GameObject.Find("SparksEffect").SetActive(true);
+            PlayGrindSound();
+            tripleJumpContacts = 0;
+            isGrounded = false;
+            jumped = false;
+            launchVelocity = Vector3.zero;
         }
 
         public bool getIsGrounded()
