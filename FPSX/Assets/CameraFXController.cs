@@ -114,7 +114,7 @@ public class CameraFXController : MonoBehaviour
 
     public void scaleFXWithTime()
     {
-        brightConSat.Brightness = Time.timeScale;
+        //brightConSat.Brightness = Time.timeScale;
         brightConSat.Saturation = Time.timeScale;
     }
 }

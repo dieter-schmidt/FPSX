@@ -99,6 +99,7 @@ namespace FPSControllerLPFP
         private GameObject currentRail;
         private List<Transform> railPoints = new List<Transform>();
         private int railPointIndex;
+        private int wpIndexDelta;
 
         private int tripleJumpContacts = 0;
 
@@ -257,7 +258,7 @@ namespace FPSControllerLPFP
             //Lerp slide camera
             //LerpSlideCamera();
 
-            Debug.Log(playerVel);
+            //Debug.Log("RPIndex = "+railPointIndex+", WPIndexDelta = "+wpIndexDelta);
 
             //wallTriggered = false;
             moved = controller.transform.position - lastPos;
@@ -287,69 +288,70 @@ namespace FPSControllerLPFP
             }
             else
             {
-                //grind logic
+                GrindMove();
+                ////grind logic
 
-                Vector3 grindMove;
+                //Vector3 grindMove;
 
-                //old logic - only handles two waypoints
-                //if (railPointIndex == 0)
+                ////old logic - only handles two waypoints
+                ////if (railPointIndex == 0)
+                ////{
+                ////    grindMove = (railPoints.ElementAt<Transform>(1).position - controller.transform.position).normalized * grindSpeed;
+                ////}
+                ////else
+                ////{
+                ////    grindMove = (railPoints.ElementAt<Transform>(0).position - controller.transform.position).normalized * grindSpeed;
+                ////}
+
+                ////new logic - handles many waypoints - 5/26
+                ////if (playerVel.z > 0f)
+                //if (transform.forward.z > 0f)
                 //{
-                //    grindMove = (railPoints.ElementAt<Transform>(1).position - controller.transform.position).normalized * grindSpeed;
+                //    Debug.Log("POSITIVE Z");
+                //    if (railPointIndex > 0)
+                //    {
+                //        grindMove = (railPoints.ElementAt<Transform>(railPointIndex - 1).position - controller.transform.position).normalized * grindSpeed;
+
+                //        // if player moves passes new waypoint, increment index
+                //        if (transform.position.z + grindMove.z * Time.deltaTime >= railPoints.ElementAt<Transform>(railPointIndex - 1).position.z)
+                //        {
+                //            railPointIndex--;
+                //        }
+                //    }
+                //    else
+                //    {
+                //        grindMove = Vector3.zero;
+                //    }
+                //}
+                ////else if (playerVel.z < 0f)
+                //else if (transform.forward.z < 0f)
+                //{
+                //    Debug.Log("NEGATIVE Z");
+                //    Debug.Log("RPCOUNT = " + railPoints.Count);
+                //    if (railPointIndex < railPoints.Count - 1)
+                //    {
+                //        grindMove = (railPoints.ElementAt<Transform>(railPointIndex + 1).position - controller.transform.position).normalized * grindSpeed;
+
+                //        // if player moves passes new waypoint, increment index
+                //        if (transform.position.z + grindMove.z * Time.deltaTime <= railPoints.ElementAt<Transform>(railPointIndex + 1).position.z && railPointIndex < railPoints.Count - 1)
+                //        {
+                //            railPointIndex++;
+                //        }
+                //    }
+                //    else
+                //    {
+                //        grindMove = Vector3.zero;
+                //    }
                 //}
                 //else
                 //{
-                //    grindMove = (railPoints.ElementAt<Transform>(0).position - controller.transform.position).normalized * grindSpeed;
+                //    grindMove = Vector3.zero;
                 //}
 
-                //new logic - handles many waypoints - 5/26
-                //if (playerVel.z > 0f)
-                if (transform.forward.z > 0f)
-                {
-                    Debug.Log("POSITIVE Z");
-                    if (railPointIndex > 0)
-                    {
-                        grindMove = (railPoints.ElementAt<Transform>(railPointIndex - 1).position - controller.transform.position).normalized * grindSpeed;
+                //launchVelocity = playerVel;
+                //controller.Move(grindMove * Time.deltaTime);
 
-                        // if player moves passes new waypoint, increment index
-                        if (transform.position.z + grindMove.z * Time.deltaTime >= railPoints.ElementAt<Transform>(railPointIndex - 1).position.z)
-                        {
-                            railPointIndex--;
-                        }
-                    }
-                    else
-                    {
-                        grindMove = Vector3.zero;
-                    }
-                }
-                //else if (playerVel.z < 0f)
-                else if (transform.forward.z < 0f)
-                {
-                    Debug.Log("NEGATIVE Z");
-                    Debug.Log("RPCOUNT = " + railPoints.Count);
-                    if (railPointIndex < railPoints.Count - 1)
-                    {
-                        grindMove = (railPoints.ElementAt<Transform>(railPointIndex + 1).position - controller.transform.position).normalized * grindSpeed;
-
-                        // if player moves passes new waypoint, increment index
-                        if (transform.position.z + grindMove.z * Time.deltaTime <= railPoints.ElementAt<Transform>(railPointIndex + 1).position.z && railPointIndex < railPoints.Count - 1)
-                        {
-                            railPointIndex++;
-                        }
-                    }
-                    else
-                    {
-                        grindMove = Vector3.zero;
-                    }
-                }
-                else
-                {
-                    grindMove = Vector3.zero;
-                }
-
-                launchVelocity = playerVel;
-                controller.Move(grindMove * Time.deltaTime);
-
-                Debug.Log(railPointIndex);
+                //Debug.Log(railPointIndex);
             }
 
             if (isGrounded && velocity.y < 0)
@@ -779,7 +781,7 @@ namespace FPSControllerLPFP
             //added triple jump check for dkc jump (prevents airjumping during triple jump string)
             if (Input.GetButtonDown("Jump") && !jumped && tripleJumpContacts == 0)//isGrounded)
             {
-                Debug.Log("JUMP TEST");
+                //Debug.Log("JUMP TEST");
 
                 //change grinding state
                 if (isGrinding)
@@ -844,6 +846,100 @@ namespace FPSControllerLPFP
                 isHoldingJump = false;
                 jumpAudioController.Stop();
             }
+        }
+
+        private void GrindMove()
+        {
+            //grind logic
+
+            Vector3 grindMove;
+
+            //ending waypoint checks
+            if (!((railPointIndex == 0 && wpIndexDelta == -1) || (railPointIndex == railPoints.Count - 1 && wpIndexDelta == 1)))
+            {
+                //grindMove = (railPoints[railPointIndex].position - railPoints[railPointIndex + wpIndexDelta].position).normalized * grindSpeed;
+                grindMove = (railPoints[railPointIndex + wpIndexDelta].position - railPoints[railPointIndex].position).normalized * grindSpeed;
+
+                // if player moves passes new waypoint, update index ( - could use refactoring
+                //added this if statement check because of null index error
+                //old
+                //if (!((railPointIndex <= 1 && wpIndexDelta == -1) || (railPointIndex >= railPoints.Count - 2 && wpIndexDelta == 1)))
+                //{
+                //    float distanceToNext = (transform.position + (grindMove * Time.deltaTime) - railPoints[railPointIndex + wpIndexDelta].position).magnitude;
+                //    float distanceToSecond = (transform.position + (grindMove * Time.deltaTime) - railPoints[railPointIndex + wpIndexDelta * 2].position).magnitude;
+                //    //if (distanceToSecond < distanceToNext)
+                //    if (distanceToSecond < distanceToNext)
+                //    {
+                //        railPointIndex += wpIndexDelta;
+                //    }
+                //}
+
+                //new
+                float distanceToNext = (railPoints[railPointIndex + wpIndexDelta].position - (transform.position + (grindMove * Time.deltaTime))).magnitude;
+                if (Mathf.Abs(distanceToNext) < 0.5f)
+                {
+                    railPointIndex += wpIndexDelta;
+                }
+
+            }
+            else
+            {
+                grindMove = Vector3.zero;
+                isGrinding = false;
+            }
+            launchVelocity = playerVel.normalized * grindSpeed;
+            controller.Move(grindMove * Time.deltaTime);
+
+            //old
+            ////new logic - handles many waypoints - 5/26
+            ////if (playerVel.z > 0f)
+            //if (transform.forward.z > 0f)
+            //{
+            //    Debug.Log("POSITIVE Z");
+            //    if (railPointIndex > 0)
+            //    {
+            //        grindMove = (railPoints.ElementAt<Transform>(railPointIndex - 1).position - controller.transform.position).normalized * grindSpeed;
+
+            //        // if player moves passes new waypoint, increment index
+            //        if (transform.position.z + grindMove.z * Time.deltaTime >= railPoints.ElementAt<Transform>(railPointIndex - 1).position.z)
+            //        {
+            //            railPointIndex--;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        grindMove = Vector3.zero;
+            //    }
+            //}
+            ////else if (playerVel.z < 0f)
+            //else if (transform.forward.z < 0f)
+            //{
+            //    Debug.Log("NEGATIVE Z");
+            //    Debug.Log("RPCOUNT = " + railPoints.Count);
+            //    if (railPointIndex < railPoints.Count - 1)
+            //    {
+            //        grindMove = (railPoints.ElementAt<Transform>(railPointIndex + 1).position - controller.transform.position).normalized * grindSpeed;
+
+            //        // if player moves passes new waypoint, increment index
+            //        if (transform.position.z + grindMove.z * Time.deltaTime <= railPoints.ElementAt<Transform>(railPointIndex + 1).position.z && railPointIndex < railPoints.Count - 1)
+            //        {
+            //            railPointIndex++;
+            //        }
+            //    }
+            //    else
+            //    {
+            //        grindMove = Vector3.zero;
+            //    }
+            //}
+            //else
+            //{
+            //    grindMove = Vector3.zero;
+            //}
+
+            //launchVelocity = playerVel;
+            //controller.Move(grindMove * Time.deltaTime);
+
+            //Debug.Log(railPointIndex);
         }
 
         IEnumerator GroundPoundCoroutine()
@@ -1181,37 +1277,20 @@ namespace FPSControllerLPFP
             }
         }
 
-        //initiate grind if rail detects new trigger collision
-        public void initiateGrind(GameObject grindRail)
+        public void initiateGrind(List<Waypoint> waypoints, int wpIndex, int indexDelta)
         {
-            //updated to allow multiple objects with "Waypoints" children
-            currentRail = grindRail.transform.Find("Waypoints").gameObject;
-            Debug.Log(currentRail.name);
             railPoints.Clear();
-            //transform.position = GameObject.Find("wp2").transform.position;
 
-            float distanceToWaypoint = 100f;
-            Transform startingWayPoint = grindRail.transform.Find("Waypoints").GetChild(0);// GameObject.Find("Waypoints").transform.GetChild(0);
+            Transform startingWayPoint = waypoints[wpIndex].transform;
+            railPointIndex = wpIndex;
+            wpIndexDelta = indexDelta;
 
-            foreach (Transform wayPoint in grindRail.transform.Find("Waypoints"))//GameObject.Find("Waypoints").transform)
+            //populate current grind waypoints
+            foreach (Waypoint waypoint in waypoints)
             {
-                railPoints.Add(wayPoint);
-
-                //find closest waypoint
-                float newDistance = Vector3.Distance(transform.position, wayPoint.position);
-                if (newDistance < distanceToWaypoint)// && transform.position.y > wayPoint.position.y)
-                {
-                    distanceToWaypoint = newDistance;
-                    startingWayPoint = wayPoint;
-                    railPointIndex = railPoints.IndexOf(startingWayPoint);
-                }
+                railPoints.Add(waypoint.transform);
             }
 
-            counter++;
-            //Debug.Log("GRIND HIT " + counter);
-            Debug.Log("rail index: "+railPointIndex);
-
-            //transform.position = startingWayPoint.position;
             controller.enabled = false;
             controller.transform.position = startingWayPoint.position;
             controller.enabled = true;
@@ -1223,6 +1302,49 @@ namespace FPSControllerLPFP
             jumped = false;
             launchVelocity = Vector3.zero;
         }
+
+        //initiate grind if rail detects new trigger collision
+        //public void initiateGrind(GameObject grindRail)
+        //{
+        //    //updated to allow multiple objects with "Waypoints" children
+        //    currentRail = grindRail.transform.Find("Waypoints").gameObject;
+        //    Debug.Log(currentRail.name);
+        //    railPoints.Clear();
+        //    //transform.position = GameObject.Find("wp2").transform.position;
+
+        //    float distanceToWaypoint = 100f;
+        //    Transform startingWayPoint = grindRail.transform.Find("Waypoints").GetChild(0);// GameObject.Find("Waypoints").transform.GetChild(0);
+
+        //    foreach (Transform wayPoint in grindRail.transform.Find("Waypoints"))//GameObject.Find("Waypoints").transform)
+        //    {
+        //        railPoints.Add(wayPoint);
+
+        //        //find closest waypoint
+        //        float newDistance = Vector3.Distance(transform.position, wayPoint.position);
+        //        if (newDistance < distanceToWaypoint)// && transform.position.y > wayPoint.position.y)
+        //        {
+        //            distanceToWaypoint = newDistance;
+        //            startingWayPoint = wayPoint;
+        //            railPointIndex = railPoints.IndexOf(startingWayPoint);
+        //        }
+        //    }
+
+        //    counter++;
+        //    //Debug.Log("GRIND HIT " + counter);
+        //    Debug.Log("rail index: "+railPointIndex);
+
+        //    //transform.position = startingWayPoint.position;
+        //    controller.enabled = false;
+        //    controller.transform.position = startingWayPoint.position;
+        //    controller.enabled = true;
+        //    isGrinding = true;
+        //    //GameObject.Find("SparksEffect").SetActive(true);
+        //    PlayGrindSound();
+        //    tripleJumpContacts = 0;
+        //    isGrounded = false;
+        //    jumped = false;
+        //    launchVelocity = Vector3.zero;
+        //}
 
         public bool getIsGrounded()
         {
@@ -1247,6 +1369,11 @@ namespace FPSControllerLPFP
         public bool getIsRotating()
         {
             return this.isRotating;
+        }
+
+        public Vector3 getVelocity()
+        {
+            return this.playerVel;
         }
 
         public void setIsRotating(bool rotationState)
