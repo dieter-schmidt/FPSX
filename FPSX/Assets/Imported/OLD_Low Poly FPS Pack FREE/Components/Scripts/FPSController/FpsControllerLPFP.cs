@@ -33,6 +33,8 @@ namespace FPSControllerLPFP
         public float glideDeltaVel = 0f;
         public float maxGlideSpeed = 50f;
         public float grindSpeed = 30f;
+        //sideways jump speed from grindable
+        public float sideJumpSpeed = 16f;
         public float groundPoundMultiplier = 5f;
         public float wallSlideGravity;
         public float wallSlideGravMultiplier = 0.2f;
@@ -743,6 +745,7 @@ namespace FPSControllerLPFP
                             //Debug.Log("BEHIND OR SIDE");
                             //only air control to the sides or back from initial jump orientation
                             //full airspeed directly lateral (1 - Mathf.Abs(dot), floor is airspeed fraction
+                            //Debug.Log("AIR CONTROL");
                             controller.Move(move * airSpeed * ((1 - Mathf.Abs(dot))+0.75f) * Time.deltaTime);
                         }
                         else
@@ -789,6 +792,38 @@ namespace FPSControllerLPFP
                     PlayGrindJumpSound();
                     isGrinding = false;
                     //GameObject.Find("SparksEffect").SetActive(false);
+
+                    //TODO - directional THPS jumping from grind - 5/30
+                    //x - horiz input, z - vert input
+                    Vector3 horizontalPlayerVel = new Vector3(playerVel.x, 0f, playerVel.z);
+                    //if not holding straight back or neutral or forward, jump sideways
+                    Debug.Log(move);
+                    if (x != 0 && Vector3.Dot(horizontalPlayerVel.normalized, move.normalized) > -1f)
+                    {
+                        //calculate the two vectors perpendicular to player velocity, parallel to ground
+                        Vector3 p1 = Quaternion.AngleAxis(90f, Vector3.up) * horizontalPlayerVel;
+                        Vector3 p2 = Quaternion.AngleAxis(-90f, Vector3.up) * horizontalPlayerVel;
+
+                        //set horizontal grind jump direction
+                        if (Vector3.Dot(p1, move) > Vector3.Dot(p2, move))
+                        {
+                            velocity = (4f*playerVel + p1).normalized * grindSpeed;// playerVel.magnitude;
+                            //velocity.x += p1.normalized.x * sideJumpSpeed;
+                            //velocity.z += p1.normalized.z * sideJumpSpeed;
+                            //launchVelocity = playerVel.normalized* grindSpeed;
+                        }
+                        else
+                        {
+                            velocity = (4f*playerVel + p2).normalized * grindSpeed;// playerVel.magnitude;
+                            //velocity.x += p2.normalized.x * sideJumpSpeed;
+                            //velocity.z += p2.normalized.z * sideJumpSpeed;
+                            //launchVelocity = playerVel.normalized * grindSpeed;
+                        }
+                        launchVelocity.x = velocity.x;
+                        launchVelocity.z = velocity.z;
+                        //controller.Move(new Vector3(velocity.x, 0f, velocity.z));
+
+                    }
                 }
                 else
                 {
@@ -1279,7 +1314,10 @@ namespace FPSControllerLPFP
 
         public void initiateGrind(List<Waypoint> waypoints, int wpIndex, int indexDelta)
         {
+            //clears, but maintains list length
             railPoints.Clear();
+            //restores to default capacity
+            railPoints.TrimExcess();
 
             Transform startingWayPoint = waypoints[wpIndex].transform;
             railPointIndex = wpIndex;

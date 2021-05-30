@@ -28,7 +28,7 @@ public class Waypoint : MonoBehaviour
         //call grind logic for player
         if (isColliding)
         {
-            if (!player.isGrinding && Input.GetKeyDown(KeyCode.V))
+            if (!player.isGrinding && Input.GetKey(KeyCode.V))
             {
                 //Debug.Log("GRIND START");
 
@@ -37,7 +37,7 @@ public class Waypoint : MonoBehaviour
                 //new
                 Debug.Log("INITIATE GRIND");
                 grindable.initiateGrind(this);
-
+                isColliding = false;
                 //Debug.Log(gameObject.name);
             }
         }
