@@ -28,6 +28,10 @@ public class Grindable : MonoBehaviour
         int newWPIndex = -1;
         //direction of grind - used in player script
         int indexDelta;
+        //initial grind speed
+        float grindSpeed;
+        float dot;
+        float dotNormalized;
 
         //if player position is "past" the waypoint in direction of rail relative to player velocity, change starting waypoint by 1
         //do not check if at and end waypoint
@@ -49,30 +53,44 @@ public class Grindable : MonoBehaviour
         //check if player velocity is going towards new waypoint, else use the current waypoint
         if (newWPIndex != -1)
         {
-            if (Vector3.Dot(initialVel, waypoints[newWPIndex].transform.position - waypoints[wpIndex].transform.position) > 0f)
+            //get player velocity in relation to grind direction
+            dot = Vector3.Dot(initialVel, waypoints[newWPIndex].transform.position - waypoints[wpIndex].transform.position);
+            dotNormalized = Vector3.Dot(initialVel.normalized, (waypoints[newWPIndex].transform.position - waypoints[wpIndex].transform.position).normalized);
+            //grindSpeed = dotNormalized * initialVel.magnitude;
+            grindSpeed = Mathf.Abs(dotNormalized * initialVel.magnitude);
+            Debug.Log(dotNormalized);
+
+            if (dot > 0f)
             {
-                player.initiateGrind(this.waypoints, newWPIndex, indexDelta);// indexDelta);
+                player.initiateGrind(this.waypoints, newWPIndex, indexDelta, grindSpeed);// indexDelta);
             }
             else
             {
-                player.initiateGrind(this.waypoints, wpIndex, -indexDelta);// indexDelta * -1) ;
+                player.initiateGrind(this.waypoints, wpIndex, -indexDelta, grindSpeed);// indexDelta * -1) ;
             }
         }
         else
         {
-            if (Vector3.Dot(initialVel, waypoints[wpIndex - 1].transform.position - waypoints[wpIndex].transform.position) > 0f)
+            //get player velocity in relation to grind direction
+            dot = Vector3.Dot(initialVel, waypoints[wpIndex - 1].transform.position - waypoints[wpIndex].transform.position);
+            dotNormalized = Vector3.Dot(initialVel.normalized, (waypoints[wpIndex - 1].transform.position - waypoints[wpIndex].transform.position).normalized);
+            //grindSpeed = dotNormalized * initialVel.magnitude;
+            grindSpeed = Mathf.Abs(dotNormalized * initialVel.magnitude);
+            Debug.Log(dotNormalized);
+
+            if (dot > 0f)
             {
                 indexDelta = -1;
-                player.initiateGrind(this.waypoints, newWPIndex, indexDelta);// indexDelta);
+                player.initiateGrind(this.waypoints, newWPIndex, indexDelta, grindSpeed);// indexDelta);
             }
             else
             {
                 indexDelta = 1;
-                player.initiateGrind(this.waypoints, wpIndex, indexDelta);// indexDelta * -1) ;
+                player.initiateGrind(this.waypoints, wpIndex, indexDelta, grindSpeed);// indexDelta * -1) ;
             }
         }
-        
 
+        //Debug.Log(dot);
         //player.initiateGrind();
     }
 

@@ -1031,5 +1031,10 @@ public class HandgunScriptLPFP : MonoBehaviour {
     {
         fireMode = fMode;
     }
+
+    public void setIsRunning(bool isRunning)
+    {
+        this.isRunning = false;
+    }
 }
 // ----- Low Poly FPS Pack Free Version -----

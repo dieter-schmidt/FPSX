@@ -35,7 +35,7 @@ public class Waypoint : MonoBehaviour
                 //old
                 //player.initiateGrind(gameObject);
                 //new
-                Debug.Log("INITIATE GRIND");
+                //Debug.Log("INITIATE GRIND");
                 grindable.initiateGrind(this);
                 isColliding = false;
                 //Debug.Log(gameObject.name);

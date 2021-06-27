@@ -33,6 +33,15 @@ namespace FPSControllerLPFP
         public float glideDeltaVel = 0f;
         public float maxGlideSpeed = 50f;
         public float grindSpeed = 30f;
+        //speed multiplier when entering grind
+        public float grindSpeedMultiplier = 1.6f;
+        //minimum grindSpeed
+        public float minGrindSpeed = 5f;
+        public float maxGrindSpeed;
+        //grind speed from last grind - used to maintain speed between grinds
+        public float lastGrindSpeed;
+        //grinds started since last grounded state
+        public int grindCount = 0;
         //sideways jump speed from grindable
         public float sideJumpSpeed = 16f;
         public float groundPoundMultiplier = 5f;
@@ -257,6 +266,7 @@ namespace FPSControllerLPFP
         /// Moves the camera to the character, processes jumping and plays sounds every frame.
         private void Update()
         {
+            //Debug.Log("COUNT: "+grindCount);
             //Lerp slide camera
             //LerpSlideCamera();
 
@@ -370,6 +380,7 @@ namespace FPSControllerLPFP
             //TODO - add code to check for ground normal and project onto plane
             if (isGrounded)
             {
+                grindCount = 0;
                 //Vector3 footPosition = new Vector3(transform.position.x, transform.position.y - ((controller.height / 2) - controller.skinWidth), transform.position.z);
                 //check when grounded and slightly leaving the ground (running down a slope for example)
                 RaycastHit hit;
@@ -797,7 +808,7 @@ namespace FPSControllerLPFP
                     //x - horiz input, z - vert input
                     Vector3 horizontalPlayerVel = new Vector3(playerVel.x, 0f, playerVel.z);
                     //if not holding straight back or neutral or forward, jump sideways
-                    Debug.Log(move);
+                    //Debug.Log(move);
                     if (x != 0 && Vector3.Dot(horizontalPlayerVel.normalized, move.normalized) > -1f)
                     {
                         //calculate the two vectors perpendicular to player velocity, parallel to ground
@@ -888,12 +899,14 @@ namespace FPSControllerLPFP
             //grind logic
 
             Vector3 grindMove;
+            float finalGrindSpeed = finalGrindSpeed = Mathf.Min(Mathf.Max(grindSpeed * grindSpeedMultiplier, minGrindSpeed), maxGrindSpeed);
 
             //ending waypoint checks
             if (!((railPointIndex == 0 && wpIndexDelta == -1) || (railPointIndex == railPoints.Count - 1 && wpIndexDelta == 1)))
             {
                 //grindMove = (railPoints[railPointIndex].position - railPoints[railPointIndex + wpIndexDelta].position).normalized * grindSpeed;
-                grindMove = (railPoints[railPointIndex + wpIndexDelta].position - railPoints[railPointIndex].position).normalized * grindSpeed;
+                //finalGrindSpeed = Mathf.Min(Mathf.Max(grindSpeed * grindSpeedMultiplier, minGrindSpeed), maxGrindSpeed);
+                grindMove = (railPoints[railPointIndex + wpIndexDelta].position - railPoints[railPointIndex].position).normalized * finalGrindSpeed;
 
                 // if player moves passes new waypoint, update index ( - could use refactoring
                 //added this if statement check because of null index error
@@ -922,7 +935,10 @@ namespace FPSControllerLPFP
                 grindMove = Vector3.zero;
                 isGrinding = false;
             }
-            launchVelocity = playerVel.normalized * grindSpeed;
+
+            launchVelocity = playerVel.normalized * finalGrindSpeed;
+            //launchVelocity = playerVel.normalized * grindSpeed * grindSpeedMultiplier;
+            //launchVelocity = playerVel.normalized * Mathf.Max(grindSpeed * grindSpeedMultiplier, minGrindSpeed);
             controller.Move(grindMove * Time.deltaTime);
 
             //old
@@ -1312,8 +1328,25 @@ namespace FPSControllerLPFP
             }
         }
 
-        public void initiateGrind(List<Waypoint> waypoints, int wpIndex, int indexDelta)
+        public void initiateGrind(List<Waypoint> waypoints, int wpIndex, int indexDelta, float grindSpeed)
         {
+            //stop running animation
+            if (isGroundDash)
+            {
+                isGroundDash = false;
+            }
+            //gunController.setIsRunning(false);
+
+            grindCount++;
+            Debug.Log("COUNT: "+grindCount);
+
+            //set initial grindSpeed (else maintain current grind speed if going from grind to grind
+            if (grindCount <= 1)
+            {
+                Debug.Log("SPEED: " + grindSpeed);
+                this.grindSpeed = grindSpeed;
+            }
+
             //clears, but maintains list length
             railPoints.Clear();
             //restores to default capacity
