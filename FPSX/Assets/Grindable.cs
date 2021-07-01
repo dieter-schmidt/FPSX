@@ -58,7 +58,7 @@ public class Grindable : MonoBehaviour
             dotNormalized = Vector3.Dot(initialVel.normalized, (waypoints[newWPIndex].transform.position - waypoints[wpIndex].transform.position).normalized);
             //grindSpeed = dotNormalized * initialVel.magnitude;
             grindSpeed = Mathf.Abs(dotNormalized * initialVel.magnitude);
-            Debug.Log(dotNormalized);
+            //Debug.Log(dotNormalized);
 
             if (dot > 0f)
             {
