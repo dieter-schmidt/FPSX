@@ -43,6 +43,9 @@ namespace FPSControllerLPFP
         public float finalGrindSpeed;
         //grinds started since last grounded state
         public int grindCount = 0;
+        public float grindSlope;
+        public bool grindStarting = false;
+        public bool grindIsUphill = false;
         //sideways jump speed from grindable
         public float sideJumpSpeed = 16f;
         public float groundPoundMultiplier = 5f;
@@ -72,7 +75,7 @@ namespace FPSControllerLPFP
         bool isGrounded;
         bool wasGrounded = false;
         bool groundPoundStart = false;
-        bool isGroundPound = false;
+        public bool isGroundPound = false;
         bool groundPounded = false;
         bool isAirDashing = false;
         //makes sure sprint is released after jumping before air dash is available
@@ -646,34 +649,48 @@ namespace FPSControllerLPFP
                 //grind lerp - 6/30/21
                 if (isGrindLerp)
                 {
-                    //float newSkidSpeed;
-                    //if (timeElapsed < skidLerpDuration)
-                    //{
-                    //    newSkidSpeed = Mathf.Lerp(skidSpeed, 0f, timeElapsed / skidLerpDuration);
-                    //    controller.Move(groundDashDirection * newSkidSpeed * Time.deltaTime);
-                    //    timeElapsed += Time.deltaTime;
-                    //}
-                    //move character in direction of first waypoint
-                    //Vector3 motion = Mathf.Lerp(0f, grindLerpVector.magnitude, timeElapsed / grindLerpDuration) * grindLerpVector.normalized;
-                    //Vector3 motion = grindLerpVector.normalized * grindLerpVector.magnitude * Time.deltaTime/grindLerpDuration;
-                    //Vector3 motion = grindLerpVector.normalized * grindLerpVector.magnitude * Time.deltaTime * 0.01f;
-                    //speed = d/t * deltaT
-                    Vector3 motion = (grindLerpVector.magnitude / grindLerpDuration) * grindLerpVector.normalized * Time.deltaTime;
-                    controller.Move(motion);
-                    grindLerpDistance += motion.magnitude;
-                    Debug.Log("Lerp Dist: " + grindLerpDistance);
-                    Debug.Log("Lerp Vector mag: " + grindLerpVector.magnitude);
-                    Debug.Log("Difference: " + (grindLerpDistance - grindLerpVector.magnitude));
-                    if (Mathf.Abs(grindLerpDistance - grindLerpVector.magnitude) <= 1f)
+                    //teleport instead of lerp if entering grind from gp
+                    if (isGroundPound)
                     {
+                        isGroundPound = false;
+                        controller.transform.position = grindData.waypoints[grindData.wpIndex].transform.position;
                         isGrindLerp = false;
                         grindLerpDistance = 0f;
-                        //start grind
-                        Debug.Log("START GRIND");
+
+                        //TODO - get player velocity before ground pound and assign to grindspeed OR allow for direction input with fixed initial grind speed
+
                         startGrind();
-
                     }
+                    else
+                    {
+                        //float newSkidSpeed;
+                        //if (timeElapsed < skidLerpDuration)
+                        //{
+                        //    newSkidSpeed = Mathf.Lerp(skidSpeed, 0f, timeElapsed / skidLerpDuration);
+                        //    controller.Move(groundDashDirection * newSkidSpeed * Time.deltaTime);
+                        //    timeElapsed += Time.deltaTime;
+                        //}
+                        //move character in direction of first waypoint
+                        //Vector3 motion = Mathf.Lerp(0f, grindLerpVector.magnitude, timeElapsed / grindLerpDuration) * grindLerpVector.normalized;
+                        //Vector3 motion = grindLerpVector.normalized * grindLerpVector.magnitude * Time.deltaTime/grindLerpDuration;
+                        //Vector3 motion = grindLerpVector.normalized * grindLerpVector.magnitude * Time.deltaTime * 0.01f;
+                        //speed = d/t * deltaT
+                        Vector3 motion = (grindLerpVector.magnitude / grindLerpDuration) * grindLerpVector.normalized * Time.deltaTime;
+                        controller.Move(motion);
+                        grindLerpDistance += motion.magnitude;
+                        //Debug.Log("Lerp Dist: " + grindLerpDistance);
+                        //Debug.Log("Lerp Vector mag: " + grindLerpVector.magnitude);
+                        //Debug.Log("Difference: " + (grindLerpDistance - grindLerpVector.magnitude));
+                        if (Mathf.Abs(grindLerpDistance - grindLerpVector.magnitude) <= 1f)
+                        {
+                            isGrindLerp = false;
+                            grindLerpDistance = 0f;
+                            //start grind
+                            Debug.Log("START GRIND");
+                            startGrind();
 
+                        }
+                    }
                 }
 
                 ////triple jump timing
@@ -939,7 +956,32 @@ namespace FPSControllerLPFP
 
             Vector3 grindMove;
             //float finalGrindSpeed = finalGrindSpeed = Mathf.Min(Mathf.Max(grindSpeed * grindSpeedMultiplier, minGrindSpeed), maxGrindSpeed);
-            finalGrindSpeed = Mathf.Min(Mathf.Max(grindSpeed * grindSpeedMultiplier, minGrindSpeed), maxGrindSpeed);
+            if (grindStarting)
+            {
+                //initial speed upon entering grind
+                finalGrindSpeed = Mathf.Min(Mathf.Max(grindSpeed * grindSpeedMultiplier, minGrindSpeed), maxGrindSpeed);
+                grindStarting = false;
+            }
+
+            //change speed based on slope of grind
+            float prevGrindSpeed = finalGrindSpeed;
+            if (grindIsUphill)
+            {
+                finalGrindSpeed -= grindSlope * 150f * Time.deltaTime;
+            }
+            else
+            {
+                finalGrindSpeed += grindSlope * 150f * Time.deltaTime;
+            }
+
+            //change direction
+            if (prevGrindSpeed > 0f && finalGrindSpeed <= 0f)
+            {
+                grindIsUphill = !grindIsUphill;
+                wpIndexDelta *= -1;
+            }
+
+            Debug.Log("GSPEED: " + finalGrindSpeed);
 
             //ending waypoint checks
             if (!((railPointIndex == 0 && wpIndexDelta == -1) || (railPointIndex == railPoints.Count - 1 && wpIndexDelta == 1)))
@@ -1376,8 +1418,21 @@ namespace FPSControllerLPFP
 
         public void initiateGrind(List<Waypoint> waypoints, int wpIndex, int indexDelta, float grindSpeed)
         {
+            //calculate slope
+            float theta = Vector2.Angle(waypoints[wpIndex].transform.position, waypoints[wpIndex + indexDelta].transform.position);
+            grindSlope = Mathf.Tan(theta);
+            Debug.Log("SLOPE: "+grindSlope);
+
             //save parameters for post-lerp
             grindData = (waypoints, wpIndex, indexDelta, grindSpeed);
+            if (waypoints[wpIndex].transform.position.y < waypoints[wpIndex + indexDelta].transform.position.y)
+            {
+                grindIsUphill = true;
+            }
+            else
+            {
+                grindIsUphill = false;
+            }
 
             //grind lerp - 6/30/21
             isGrindLerp = true;
@@ -1433,13 +1488,13 @@ namespace FPSControllerLPFP
         public void startGrind()
         {
             grindCount++;
-            Debug.Log("COUNT: " + grindCount);
+            //Debug.Log("COUNT: " + grindCount);
             Transform startingWayPoint = grindData.waypoints[grindData.wpIndex].transform;
 
             //set initial grindSpeed (else maintain current grind speed if going from grind to grind
             if (grindCount <= 1)
             {
-                Debug.Log("SPEED: " + grindSpeed);
+                //Debug.Log("SPEED: " + grindSpeed);
                 this.grindSpeed = grindData.grindSpeed;
             }
 
@@ -1462,6 +1517,7 @@ namespace FPSControllerLPFP
             controller.transform.position = startingWayPoint.position;
             controller.enabled = true;
             isGrinding = true;
+            grindStarting = true;
             //GameObject.Find("SparksEffect").SetActive(true);
             PlayGrindSound();
             tripleJumpContacts = 0;

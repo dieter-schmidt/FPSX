@@ -36,6 +36,12 @@ public class Waypoint : MonoBehaviour
                 //player.initiateGrind(gameObject);
                 //new
                 //Debug.Log("INITIATE GRIND");
+
+                //allow ground pound into grind
+                if (!player.isGroundPound)
+                {
+                    player.isGroundPound = false;
+                }
                 grindable.initiateGrind(this);
                 isColliding = false;
                 //Debug.Log(gameObject.name);
