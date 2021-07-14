@@ -723,6 +723,11 @@ public class HandgunScriptLPFP : MonoBehaviour {
                     case ("Damageable"):
                         target.GetComponent<ColumnVariableBreakScript>().TakeDamage(damage);
                         break;
+                    case ("Panel"):
+                        //launch character in specified panel direction
+                        LaunchPanel panel = target.GetComponent<LaunchPanel>();
+                        movementController.panelLaunch(panel, hit.normal);
+                        break;
                     default:
                         //add force on hit in direction of impact
                         if (hit.rigidbody != null)

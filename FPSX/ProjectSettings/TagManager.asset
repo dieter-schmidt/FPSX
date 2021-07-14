@@ -15,6 +15,7 @@ TagManager:
   - AnimatedEnemy
   - Damageable
   - Grindable
+  - Panel
   layers:
   - Default
   - TransparentFX

@@ -1526,6 +1526,16 @@ namespace FPSControllerLPFP
             launchVelocity = Vector3.zero;
         }
 
+        public void panelLaunch(LaunchPanel panel, Vector3 panelNormal)//(Vector3 panelNormal, Quaternion direction, float launchSpeed)
+        {
+            //velocity = -transform.forward * launchSpeed;// * direction;
+            //launchVelocity = velocity;
+            //set velocity relative to panel normal
+            velocity = panel.getDirection().normalized * panel.getLaunchSpeed();
+            launchVelocity = panel.getDirection().normalized * panel.getLaunchSpeed();
+            Debug.Log(panel.getDirection());
+        }
+
         //initiate grind if rail detects new trigger collision
         //public void initiateGrind(GameObject grindRail)
         //{
