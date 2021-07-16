@@ -123,6 +123,8 @@ namespace FPSControllerLPFP
 
         private int tripleJumpContacts = 0;
 
+        private DropPlatform dropPlatform;
+
 
 #pragma warning disable 649
 
@@ -275,6 +277,9 @@ namespace FPSControllerLPFP
         /// Moves the camera to the character, processes jumping and plays sounds every frame.
         private void Update()
         {
+            //check for platform drop through
+            checkDropPlatform();
+
             //Debug.Log("COUNT: "+grindCount);
             //Lerp slide camera
             //LerpSlideCamera();
@@ -1742,6 +1747,23 @@ namespace FPSControllerLPFP
         private void OnCollisionExit(Collision collision)
         {
 
+        }
+
+        public void setDropPlatform(DropPlatform platform)
+        {
+            //Debug.Log("platform set");
+            this.dropPlatform = platform;
+        }
+
+        public void checkDropPlatform()
+        {
+            if (dropPlatform != null && Input.GetButtonDown("Ability"))
+            {
+                if (dropPlatform.getIsCollidingWithPlayer() == true)
+                {
+                    dropPlatform.updateLayer();
+                }
+            }
         }
     }
 
