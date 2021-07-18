@@ -89,6 +89,7 @@ namespace FPSControllerLPFP
         bool jumpHoldAllowed = true;
         private Vector3 worldRotationAxis;
         bool isSliding = false;
+        bool slideStarted = false;
         bool isGliding = false;
         bool isDescending = false;
         public bool isGrinding = false;
@@ -106,6 +107,8 @@ namespace FPSControllerLPFP
         Vector3 groundDashDirection;
         Vector3 grindLerpVector;
         float grindLerpDistance = 0f;
+
+        private float cameraHeight;
 
         private int airDashesUsed = 0;
         private int airDashesAllowed = 2;//1;
@@ -253,6 +256,7 @@ namespace FPSControllerLPFP
         /// Initializes the FpsController on start.
         private void Start()
         {
+            cameraHeight = mainCamera.transform.localPosition.y;
             wallSlideGravity = gravity;
             lastPos = transform.position;
             _audioSource = GetComponent<AudioSource>();
@@ -280,9 +284,10 @@ namespace FPSControllerLPFP
             //check for platform drop through
             checkDropPlatform();
 
-            //Debug.Log("COUNT: "+grindCount);
+            //Debug.Log(slideStarted);
+            Debug.Log(mainCamera.transform.localPosition.y);
             //Lerp slide camera
-            //LerpSlideCamera();
+            LerpSlideCamera();
 
             //Debug.Log("RPIndex = "+railPointIndex+", WPIndexDelta = "+wpIndexDelta);
 
@@ -416,6 +421,7 @@ namespace FPSControllerLPFP
                             //setSlideCamera(true);
                         }
                         isSliding = true;
+                        slideStarted = true;
                     }
                     else// if (groundNormal.z < 0.01f)
                     {
@@ -1409,16 +1415,30 @@ namespace FPSControllerLPFP
 
         public void LerpSlideCamera()
         {
-            if (isSliding && timeElapsed < slideLerpDuration)
+            if (slideStarted)
             {
-                mainCamera.transform.localPosition = new Vector3(0f, Mathf.Lerp(0f, -controller.height / 2.5f, timeElapsed/slideLerpDuration), 0f);
-                timeElapsed += Time.deltaTime;
+                //Debug.Log("lerp slide");
+                if (isSliding && timeElapsed < slideLerpDuration)
+                {
+                    //mainCamera.transform.localPosition = new Vector3(0f, Mathf.Lerp(0f, -controller.height / 2.5f, timeElapsed / slideLerpDuration), 0f);
+                    mainCamera.transform.localPosition = new Vector3(0f, Mathf.Lerp(cameraHeight, -cameraHeight / 2.5f, timeElapsed / slideLerpDuration), 0f);
+                    timeElapsed += Time.deltaTime;
+                }
+                else if (!isSliding && timeElapsed < slideLerpDuration)
+                {
+                    //mainCamera.transform.localPosition = new Vector3(0f, Mathf.Lerp(-controller.height / 2.5f, 0f, timeElapsed / slideLerpDuration), 0f);
+                    mainCamera.transform.localPosition = new Vector3(0f, Mathf.Lerp(-cameraHeight / 2.5f, cameraHeight, timeElapsed / slideLerpDuration), 0f);
+                    timeElapsed += Time.deltaTime;
+
+                    //reset after slide and camera change is finished
+                    if (Mathf.Abs(mainCamera.transform.localPosition.y - cameraHeight) <= 0.05)
+                    {
+                        slideStarted = false;
+                        mainCamera.transform.localPosition = new Vector3(mainCamera.transform.localPosition.x, cameraHeight, mainCamera.transform.localPosition.z);
+                    }
+                }
             }
-            else if (!isSliding && timeElapsed < slideLerpDuration)
-            {
-                mainCamera.transform.localPosition = new Vector3(0f, Mathf.Lerp(-controller.height / 2.5f, 0f, timeElapsed/slideLerpDuration), 0f);
-                timeElapsed += Time.deltaTime;
-            }
+
         }
 
         public void initiateGrind(List<Waypoint> waypoints, int wpIndex, int indexDelta, float grindSpeed)

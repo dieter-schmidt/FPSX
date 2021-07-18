@@ -22,8 +22,8 @@ public class DropPlatform : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log(LayerMask.LayerToName(platformCollider.layer));
-        Debug.Log(platformCollider.layer);
+        //Debug.Log(LayerMask.LayerToName(platformCollider.layer));
+        //Debug.Log(platformCollider.layer);
     }
 
     //changes platform layer to allow/disallow player drop through
@@ -72,7 +72,7 @@ public class DropPlatform : MonoBehaviour
         Debug.Log(LayerMask.LayerToName(other.gameObject.layer));
         if (LayerMask.LayerToName(other.gameObject.layer) == "Player" && !isCollidingWithPlayer)
         {
-            Debug.Log("ontriggerenter");
+            //Debug.Log("ontriggerenter");
             isCollidingWithPlayer = true;
             player.setDropPlatform(this);
         }
@@ -83,7 +83,7 @@ public class DropPlatform : MonoBehaviour
         if (LayerMask.LayerToName(platformCollider.layer) == "DropPlatform")
         {
             isCollidingWithPlayer = false;
-            Debug.Log("ontriggerexit");
+            //Debug.Log("ontriggerexit");
             platformCollider.layer = LayerMask.NameToLayer("Ground");
         }
     }
